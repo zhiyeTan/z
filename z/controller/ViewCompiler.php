@@ -80,9 +80,9 @@ class zConViewcompiler
 	 * @param  string  $viewName  公共视图名
 	 * @return string
 	 */
-	public static function render($data = '', $viewName = ''){
+	public static function render($data = '', $viewName = '', $moduleName = ''){
 		$businessName = $viewName ?: APP_BUSINESS;
-		$moduleName = $viewName ? 'public' : APP_DIR;
+		$moduleName = $moduleName ?: APP_DIR;
 		$tplPath = zCoreConfig::getViewPath($businessName, $moduleName);
 		$cplPath = zCoreConfig::getViewPath($businessName, $moduleName, true, true);
 		if(!zCoreConfig::$options['compile_enable'] || !is_file($cplPath)){

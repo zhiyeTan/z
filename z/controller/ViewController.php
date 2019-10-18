@@ -8,7 +8,8 @@ class zConViewController extends zCoreBase
 {
 	use zConController;
 	
-	protected $viewName = '';//视图名，空表示与业务名称一致，否则表示公共视图
+	protected $viewName = '';//视图名，空表示与业务名称一致
+    protected $moduleName = '';//模块名，空表示与APPNAME一致
 	
 	/**
 	 * 构建函数
@@ -27,7 +28,8 @@ class zConViewController extends zCoreBase
 		$content = $this->cache;
 		if(!$content){
 			$this->main();
-			$content = zConViewcompiler::render($this->data, $this->errno ? $this->errViewName : $this->viewName);
+			$viewName = $this->errno ? $this->errViewName : $this->viewName;
+			$content = zConViewcompiler::render($this->data, $viewName, $this->moduleName);
 			//修正静态资源的路径（不包括站外资源引用）
 			$content = zCoreRouter::redirectStaticResources($content);
 			if(!$this->errno){
