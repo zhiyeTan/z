@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>4CM框架基础导引</title>
+		<component id="meta"></component>
+	</head>
+	<body>
+		<component id="header" attach="all"></component>
+		<div class="container-fluid margintop-3">
+			<div class="row">
+				<div class="col-sm-2">
+					<nav id="sidebar" class="nav nav-pills flex-column">
+						<li class="nav-item">
+							<a class="nav-link active" href="#outline">架构概要</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#life">生命周期</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#entrance">入口文件</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#access">访问机制</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#business">业务设计</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#name">类名规范</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#autoload">自动加载</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#cache">缓存机制</a>
+						</li>
+					</nav>
+					<hr class="d-sm-none" />
+				</div>
+				<div class="col-sm-10">
+					<h1 class="text-center margintop-3">架构</h1>
+					<h2 id="outline" class="margintop-2 marginbottom-3">架构概要</h2>
+					<p class="text-indent">为实现独立单元的最小化，4CM基于<mark>MVC</mark>设计模式的基础上做了一系列的调整。</p>
+					<p class="annotation">MVC是一个设计模式，它强制性的使应用程序的输入、处理和输出分开。使用MVC应用程序被分成三个核心部件：模型（M）、视图（V）、控制器（C），它们各自处理自己的任务。</p>
+					<p class="text-indent">核心控制器逻辑整理后集中在<mark>/z/controller</mark>目录中。业务端的控制器继承核心控制器<code>zCoreController</code>，与传统控制器不同的是，这里的业务端控制器只处理单一的业务逻辑，也就是移除了<code>action</code>的概念，或者称之为业务处理器更合适。</p>
+					<h2 id="life" class="margintop-2 marginbottom-3">生命周期</h2>
+					<h2 id="entrance" class="margintop-2 marginbottom-3">入口文件</h2>
+					<h2 id="access" class="margintop-2 marginbottom-3">访问机制</h2>
+					<h2 id="business" class="margintop-2 marginbottom-3">业务设计</h2>
+					<h2 id="name" class="margintop-2 marginbottom-3">类名规范</h2>
+					<h2 id="autoload" class="margintop-2 marginbottom-3">自动加载</h2>
+					<h2 id="cache" class="margintop-2 marginbottom-3">缓存机制</h2>
+				</div>
+			</div>
+		</div>
+		<component id="footer"></component>
+	</body>
+</html>
+
+

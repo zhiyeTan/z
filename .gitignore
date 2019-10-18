@@ -1,0 +1,7 @@
+doc
+log/*
+resource/video/*
+resource/upload/*
+tmpfs/*
+.project
+.idea

@@ -1,0 +1,21 @@
+<ul>
+	<foreach data="nav" key="key" value="value">
+		<li>
+			<p>key:{{key}}</p>
+			<if flag="value.child">
+				<ul>
+					<foreach data="value.child" key="nkey" value="nvalue">
+						<li>
+							<p>key:{{key}}</p>
+							<p>nkey:{{nkey}}</p>
+							<p>nvalue:{{nvalue.value}}</p>
+							<if flag="nvalue.flag == 0">if flag = 0</if>
+							<if flag="nvalue.flag < 0">if flag < 0</if>
+							<if flag="nvalue.flag > 0">if flag > 0</if>
+						</li>
+					</foreach>
+				</ul>
+			</if>
+		</li>
+	</foreach>
+</ul>

@@ -1,0 +1,78 @@
+#sidebar {
+	position: absolute;
+	box-sizing: border-box;
+	width: 240px;
+	top: 0;
+	left: 0;
+	right: auto;
+	bottom: 0;
+	background: #fff;
+	z-index: 999;
+	overflow: hidden;
+}
+
+#sideScrollBar {
+	position: absolute;
+	width: 10px;
+	height: 100%;
+	background: #fff;
+}
+
+#sideScrollBarSlider {
+	width: 100%;
+	height: 50px;
+	border-radius: 5px;
+	background: #d7dadd;
+}
+
+#sidebarContent {
+	padding: 30px;
+}
+
+.admin-box{
+	padding-bottom: 50px;
+}
+.admin-tag{
+	width: 50px;
+	height: 50px;
+	border-radius: 25px;
+	background: #434959;
+	color: #fff;
+	font-size: 30px;
+	text-align: center;
+}
+.admin-info{
+	margin: 5px 0 0 15px;
+}
+.operator-name{
+	font-size: 15px;
+	font-weight: 700;
+}
+#sidebar nav{
+	font-size: 14px;
+}
+#sidebar nav li{
+	list-style: none;
+}
+#sidebar nav a{
+	display: block;
+	padding: 10px 0;
+	color: #495057;
+}
+#sidebar nav a span{
+	margin-left: 10px;
+}
+#sidebar nav ul{
+	display: none;
+	padding-left: 28px;
+}
+#sidebar .active{
+	color: #02c0ce;
+}
+
+@media only screen and (max-width: 640px) {
+	#sidebar {
+		/*left: -200px;*/
+		left: 0;
+	}
+}

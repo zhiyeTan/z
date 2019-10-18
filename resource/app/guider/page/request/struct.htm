@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>4CM框架基础导引</title>
+		<component id="meta"></component>
+	</head>
+	<body>
+		<component id="header" attach="all"></component>
+		<div class="container-fluid margintop-3">
+			<div class="row">
+				<div class="col-sm-2">
+					<nav id="sidebar" class="nav nav-pills flex-column">
+						<li class="nav-item">
+							<a class="nav-link active" href="#">请求信息</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#">变量信息</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#">请求伪装</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#">伪静态</a>
+						</li>
+					</nav>
+					<hr class="d-sm-none" />
+				</div>
+				<div class="col-sm-10">
+					<h1 class="text-center margintop-3">请求</h1>
+					<h2 id="" class="margintop-2 marginbottom-3">起源</h2>
+					<p class="text-indent">4CM的设计初衷是是尽可能地把复杂的框架以及业务逻辑拆分成独立单元模块，每个单元模块可进行独立开发，并且尽可能降低每个模块的上手难度，以实现高效协同、敏捷开发等特点。</p>
+					<p class="text-indent">流行的几大框架各有千秋，为了满足海量用户的需求，框架的功能及生态都相当丰富，于是其体积也必然增大。但是对于一般项目而言，所用到的框架功能不足其十一，基于以上考虑，作者决定基于原生重新开发一个简易的框架。</p>
+					<p class="text-indent">4CM框架遵循基本设计原则，同时考虑到项目不同阶段需求，简要地制定了相关的扩展策略，包括服务环境变更、表拆分、热点功拆分等。</p>
+					<p class="text-indent">最后，在机缘巧合之下，4CM的核心代码刚好划分为以下5种类型的文件：<mark>config</mark>、<mark>const</mark>、<mark>controller</mark>、<mark>core</mark>以及<mark>model</mark>，恰好是四个以c开头和一个以m开头的单词构成，于是作者决定用4CM命名此框架，同时也是象征着其小巧的体积。</p>
+					<h2 id="" class="margintop-2 marginbottom-3">特性</h2>
+					<p class="text-indent">灵活：最小化依赖，扩展更灵活、方便。</p>
+					<p class="text-indent">API友好：业务逻辑随时可以在视图与API之间切换。</p>
+					<p class="text-indent">高效：惰性加载，及路由、配置和缓存机制。</p>
+					<p class="text-indent">ORM：重构的数据库、模型及关联。</p>
+					<h2 id="" class="margintop-2 marginbottom-3">彩蛋</h2>
+					<p class="text-indent">4CM所设计的模板是前后端通用的，并且前端已进行了基本的实现。以及采用indexdb结合后台文件管理进行精确版本控制的策略构想，也进行了相应的尝试，确定了其可行性。</p>
+					<p class="text-indent">但随着uniapp的发布，与之相关的开发都暂停了，后续可能会跟进完善这一功能。而在此之前，会先进行uniapp的对接测试。</p>
+				</div>
+			</div>
+		</div>
+		<component id="footer"></component>
+	</body>
+</html>
+
+

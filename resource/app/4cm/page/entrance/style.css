@@ -1,0 +1,16 @@
+#loginForm{
+	margin-top: 8rem;
+}
+
+@media only screen and (min-width: 321px) {
+	#loginForm{
+		width: 280px;
+		margin: 0 auto;
+	}
+}
+
+@media only screen and (min-width: 641px) {
+	#loginForm{
+		margin-top: 16rem;
+	}
+}

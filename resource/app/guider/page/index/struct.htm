@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>4CM框架基础导引</title>
+		<component id="meta"></component>
+	</head>
+
+	<body>
+		<component id="header" attach="all"></component>
+		<div class="container-fluid margintop-3">
+			<div class="row">
+				<div class="col-sm-2">
+					<nav id="sidebar" class="nav nav-pills flex-column">
+						<li class="nav-item">
+							<a class="nav-link active" href="#before">前言</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#directory">目录结构</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#standard">开发规范</a>
+						</li>
+					</nav>
+					<hr class="d-sm-none" />
+				</div>
+				<div class="col-sm-10">
+					<h1 class="text-center margintop-3">4CM 概述</h1>
+					<h2 id="before" class="margintop-2 marginbottom-3">前言</h2>
+					<p class="text-indent font-weight-bold text-primary">起源</p>
+					<p class="text-indent">4CM的设计初衷是是尽可能地把复杂的框架以及业务逻辑拆分成独立单元模块，每个单元模块可进行独立开发，并且尽可能降低每个模块的上手难度，以实现高效协同、敏捷开发等特点。</p>
+					<p class="text-indent">流行的几大框架各有千秋，为了满足海量用户的需求，框架的功能及生态都相当丰富，于是其体积也必然增大。但是对于一般项目而言，所用到的框架功能不足其十一，基于以上考虑，作者决定基于原生重新开发一个简易的框架。</p>
+					<p class="text-indent">4CM框架遵循基本设计原则，同时考虑到项目不同阶段需求，简要地制定了相关的扩展策略，包括服务环境变更、表拆分、热点功拆分等。</p>
+					<p class="text-indent">最后，在机缘巧合之下，4CM的核心代码刚好划分为以下5种类型的文件：<mark>config</mark>、<mark>const</mark>、<mark>controller</mark>、<mark>core</mark>以及<mark>model</mark>，恰好是四个以c开头和一个以m开头的单词构成，于是作者决定用4CM命名此框架，同时也是象征着其小巧的体积。</p>
+					<p class="text-indent font-weight-bold text-primary">特性</p>
+					<p class="text-indent">灵活：最小化依赖，扩展更灵活、方便。</p>
+					<p class="text-indent">API友好：业务逻辑随时可以在视图与API之间切换。</p>
+					<p class="text-indent">高效：惰性加载，及路由、配置和缓存机制。</p>
+					<p class="text-indent">ORM：重构的数据库、模型及关联。</p>
+					<p class="text-indent font-weight-bold text-primary">彩蛋</p>
+					<p class="text-indent">4CM所设计的模板是前后端通用的，并且前端已进行了基本的实现。以及采用indexdb结合后台文件管理进行精确版本控制的策略构想，也进行了相应的尝试，确定了其可行性。</p>
+					<p class="text-indent">但随着uniapp的发布，与之相关的开发都暂停了，后续可能会跟进完善这一功能。而在此之前，会先进行uniapp的对接测试。</p>
+					<h2 id="directory" class="margintop-2 marginbottom-3">目录结构</h2>
+					<p class="text-indent">
+						<div class="code">
+							<p><span>www</span><span style="margin-left: 1em;">WEB部署目录（或者子目录）</span></p>
+							<ul style="max-width: 300px;">
+								<li><span>-- app</span><span class="float-right">应用目录</span></li>
+								<ul class="indent">
+									<li><span>-- default</span><span class="float-right">默认应用</span></li>
+									<ul class="indent">
+										<li><span>-- business</span><span class="float-right">业务逻辑</span></li>
+										<li><span>-- config</span><span class="float-right">应用配置</span></li>
+										<li><span>-- public</span><span class="float-right">公共资源</span></li>
+									</ul>
+									<li><span>-- const</span><span class="float-right">应用常量</span></li>
+									<li><span>-- plugins</span><span class="float-right">应用插件</span></li>
+								</ul>
+								<li><span>-- entrance</span><span class="float-right">部署入口</span></li>
+								<li><span>-- log</span><span class="float-right">日志目录</span></li>
+								<li><span>-- model</span><span class="float-right">数据模型</span></li>
+								<li><span>-- resource</span><span class="float-right">静态资源</span></li>
+								<ul class="indent">
+									<li><span>-- app</span><span class="float-right">应用模版</span></li>
+									<li><span>-- audio</span><span class="float-right">音频资源</span></li>
+									<li><span>-- css</span><span class="float-right">公共样式</span></li>
+									<li><span>-- frame</span><span class="float-right">框架资源</span></li>
+									<li><span>-- image</span><span class="float-right">图片资源</span></li>
+									<li><span>-- js</span><span class="float-right">公共脚本</span></li>
+									<li><span>-- ui</span><span class="float-right">UI资源</span></li>
+									<li><span>-- upload</span><span class="float-right">上传目录</span></li>
+									<li><span>-- video</span><span class="float-right">视频资源</span></li>
+								</ul>
+								<li><span>-- tmpfs</span><span class="float-right">缓存目录</span></li>
+								<ul class="indent">
+									<li><span>-- cache</span><span class="float-right">静态缓存</span></li>
+									<li><span>-- compiled</span><span class="float-right">编译缓存</span></li>
+									<li><span>-- default</span><span class="float-right">默认目录</span></li>
+									<li><span>-- model</span><span class="float-right">数据模型缓存</span></li>
+									<li><span>-- urlmap</span><span class="float-right">短地址映射</span></li>
+								</ul>
+								<li><span>-- z</span><span class="float-right">框架目录</span></li>
+								<ul class="indent">
+									<li><span>-- config</span><span class="float-right">全局配置</span></li>
+									<li><span>-- const</span><span class="float-right">全局常量</span></li>
+									<li><span>-- controller</span><span class="float-right">控制器</span></li>
+									<li><span>-- core</span><span class="float-right">框架核心</span></li>
+									<li><span>-- model</span><span class="float-right">数据模型</span></li>
+									<li><span>-- z.php</span><span class="float-right">框架引导文件</span></li>
+								</ul>
+							</ul>
+						</div>
+					</p>
+					<h2 id="standard" class="margintop-2 marginbottom-3">开发规范</h2>
+					<p class="text-indent">为了追求极致的最小化依赖及代码书写，以及更清晰的语义化，4CM设计一套量身定制的规范，主要体现于舍弃了主流的命名空间，采用了灵活的自定义映射方式。</p>
+					<p class="text-indent">当然，如果开发者倾向于使用命名空间的话，可以随意在<mark>app</mark>目录下添加相应支持。</p>
+					<p class="text-indent font-weight-bold text-primary">目录和文件</p>
+					<ul class="block-indent">
+						<li>目录使用小写+下划线；</li>
+						<li>类库、函数文件统一以<code>.php</code>为后缀；</li>
+						<li>类的文件名均以命名空间定义，并且命名空间的路径和类库文件所在路径一致；</li>
+						<li>类文件采用驼峰法命名（首字母大写），其它文件采用小写+下划线命名；</li>
+						<li>类名和类文件名保持一致，统一采用驼峰法命名（首字母大写）；</li>
+					</ul>
+					<p class="text-indent font-weight-bold text-primary">函数和类、属性命名</p>
+					<ul class="block-indent">
+						<li>类的命名采用驼峰法（首字母大写），例如 <code>User</code>、<code>UserType</code>，默认不需要添加后缀，例如<code>UserController</code>应该直接命名为<code>User</code>；</li>
+						<li>函数的命名使用小写字母和下划线（小写字母开头）的方式，例如 <code>get_client_ip</code>；</li>
+						<li>方法的命名使用驼峰法（首字母小写），例如 <code>getUserName</code>；</li>
+						<li>属性的命名使用驼峰法（首字母小写），例如 <code>tableName</code>、<code>instance</code>；</li>
+						<li>以双下划线“__”打头的函数或方法作为魔术方法，例如 <code>__call</code> 和 <code>__autoload</code>；</li>
+					</ul>
+					<p class="text-indent font-weight-bold text-primary">常量和配置</p>
+					<ul class="block-indent">
+						<li>常量以大写字母和下划线命名，例如 <code>APP_PATH</code>和 <code>THINK_PATH</code>；</li>
+						<li>配置参数以小写字母和下划线命名，例如 <code>url_route_on</code> 和<code>url_convert</code>；</li>
+					</ul>
+					<p class="text-indent font-weight-bold text-primary">数据表和字段</p>
+					<ul class="block-indent">
+						<li>数据表和字段采用小写加下划线方式命名，并注意字段名不要以下划线开头，例如 <code>think_user</code> 表和 <code>user_name</code>字段，不建议使用驼峰和中文作为数据表字段命名。</li>
+					</ul>
+					<p class="text-indent font-weight-bold text-primary">应用类库命名空间规范</p>
+					<p class="text-indent">应用类库的根命名空间统一为app（不建议更改，可以设置<code>app_namespace</code>配置参数更改，<code>V5.0.8</code>版本开始使用<code>APP_NAMESPACE</code>常量定义）；
+					<p class="text-indent">例如：<code>app\index\controller\Index</code>和<code>app\index\model\User</code>。</p>
+				</div>
+			</div>
+		</div>
+		<component id="footer"></component>
+	</body>
+
+</html>
