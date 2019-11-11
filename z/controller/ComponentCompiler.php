@@ -22,13 +22,14 @@ class zConComponentCompiler
 			zCoreMethod::mkFolder(dirname($cplPath));
 			zCoreMethod::write($cplPath, self::compile(zCoreMethod::read($tplPath)));
 		}
-		//将数组键值对转换成多个变量值
-		is_array($data) ? extract($data) : '';
-		//打开缓冲区
-		ob_start();
-		//载入模板
-		include $cplPath;
-		//返回缓冲内容并清空
-		return ob_get_clean();
+		if(is_array($data)){
+			extract($data);
+			ob_start();
+			include $cplPath;
+			return ob_get_clean();
+		}
+		else{
+			return zCoreMethod::read($cplPath);
+		}
 	}
 }

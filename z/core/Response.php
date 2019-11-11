@@ -143,6 +143,5 @@ class zCoreResponse
 			//提高页面响应
 			fastcgi_finish_request();
 		}
-		echo '响应完毕';
 	}
 }

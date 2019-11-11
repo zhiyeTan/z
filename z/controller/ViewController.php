@@ -37,5 +37,6 @@ class zConViewController extends zCoreBase
 			}
 		}
 		zCoreResponse::setContent($content)::send();
+		$this->delay();
 	}
 }

@@ -8,6 +8,7 @@ class zCoreBase
 {
 	private static $mountMap = [];//挂载映射
 	private static $instanceMap = [];//已挂载的实例映射
+	private static $regexAliasMap = [];//正则别名映射
 	
 	/**
 	 * 设置挂载映射
@@ -69,6 +70,11 @@ class zCoreBase
 	 * @return string
 	 */
 	public static function filter($string, $rule){
+		static $ready;
+		if(!$ready){
+			$ready = 1;
+			self::$regexAliasMap = zCoreConfig::loadConfig('regexAliasMap');
+		}
 		$rule = explode(':', $rule);
 		if($string === null){
 			return $rule[1] ?? null;

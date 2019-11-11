@@ -6,7 +6,37 @@
  */
 class zCoreRequest
 {
+	private static $error = [];//错误信息栈堆
+	private static $exception = [];//异常键名集合
 	private function __construct(){}//静态类，禁止构造对象
+	
+	/**
+	 * 获取或添加错误信息栈堆
+	 */
+	public static function error($info = ''){
+		if($info){
+			self::$error[] = $info;
+		}
+		else{
+			return self::$error;
+		}
+	}
+	
+	/**
+	 * 获取或添加异常键名
+	 * @access private
+	 * @param  string  $type  指定类型
+	 * @param  string  $key   键名
+	 * @return array
+	 */
+	public static function exception($type, $key = ''){
+		if($key){
+			self::$exception[$type][] = $key;
+		}
+		else{
+			return self::$exception[$type] ?? null;
+		}
+	}
 	
 	/**
 	 * 获取或修改指定类型的参数
@@ -18,11 +48,11 @@ class zCoreRequest
 	private static function info($type, $mixed){
 		if(!empty($mixed) && is_array($mixed)){
 			if($type == 'cookie'){
-				$expire = $v === null ? -1 : time() + zCoreConfig::$options['cookie_expire'];
+				$expire = time() + zCoreConfig::$options['cookie_expire'];
 			}
 			foreach($mixed as $k => $v){
 				if($type == 'cookie'){
-					setcookie($k, $v, $expire, '/', self::getCookieScope(), zCoreConfig::$options['is_https']);
+					setcookie($k, $v, $v === null ? -1 : $expire, '/', self::getCookieScope(), zCoreConfig::$options['is_https']);
 				}
 				else{
 					switch($type){
@@ -65,7 +95,7 @@ class zCoreRequest
 		}
 		//cookie需要特别处理一下
 		if($type == 'cookie'){
-			$value = $targetInfo[$mixed] ?? null;
+			$value = $_COOKIE[$mixed] ?? null;
 			$data = $value ? json_decode($value, true) : null;
 			return $data === null ? $value : $data;
 		}

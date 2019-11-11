@@ -3,21 +3,6 @@
 class appBizListBusiness extends appPubDataController
 {
 	protected function main(){
-		$tree = $this->listDirTree(dirname(dirname(APP_PATH)), ['README.txt', 'README.md', '.project', 'doc']);
-		$nt = [];
-		foreach($tree as $item){
-			$nt[$item['name']] = '';
-			if(!empty($item['children'])){
-				$keys = array_column($item['children'], 'name');
-				sort($keys);
-				$nt[$item['name']] = $keys;
-			}
-		}
-		ksort($nt);
-		echo '<pre>';
-		print_r($nt);
-		exit;
-		
 		//从目录里面拿到appname与business的映射
 		$tree = $this->listDirTree(dirname(APP_PATH), ['common', 'const', 'plugins', 'public', 'README.txt']);
 		$bizMap = [];

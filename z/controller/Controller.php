@@ -70,8 +70,7 @@ trait zConController
 		$filters = $requestType == 'get' ? $this->getFilterRules : $this->postFilterRules;
 		$basics  = $requestType == 'get' ? ['a', 'b'] : ['token'];
 		$logName = $requestType == 'get' ? 'illegalGetLog' : 'abnormalPoscho';
-
-		$error = false;
+		
 		//获得不被允许的参数键名(空表示不限制传入参数)
 		$diff = empty($allows) ? '' : array_diff(array_keys($target), array_merge($basics, $allows));
 		//验证参数的合法性
@@ -79,21 +78,19 @@ trait zConController
 			//不合法时标记错误
 			if(!get_called_class()::verify($target[$k] ?? null, $rule)){
 				$error = true;
-				break;
+				zCoreRequest::exception($method, $k);
 			}
 		}
 		//若存在差异键名或非法验证，记录请求信息到日志中
-		if($diff || $error){
+		if(!empty($diff) || !empty(zCoreRequest::exception($method))){
 			$content = date('Y-m-d H:i:s', zCoreRequest::server('REQUEST_TIME')) . ' ';
 			$content .= zCoreRequest::ip() . ' ';
 			$content .= $requestType == 'get' ? zCoreRequest::server('REQUEST_URI') : var_export(zCoreRequest::post(), true);
 			zCoreLog::save($logName, $content);
-			//参数不合法时触发错误处理
-			if($error){
-				trigger_error(T_ILLEGAL_PARAMETER, E_USER_ERROR);
-			}
 			//删除多余的参数
-			zCoreRequest::$method(array_fill_keys($diff, null));
+			if(!empty($diff)){
+				zCoreRequest::$method(array_fill_keys($diff, null));
+			}
 		}
 		//过滤参数
 		foreach($filters as $k => $rule){
@@ -105,19 +102,9 @@ trait zConController
 	 * 主方法(相应相关的业务逻辑都应该放在这个方法下)
 	 */
 	protected function main(){}
-
+	
 	/**
-     * 创建一个异步任务(配合swoole使用)
-     * @access public
-     * @param  string  $className  类名
-     * @param  string  $action     方法名
-     * @param  arrray  $args       参数
-     */
-	public function createAsyncTask($className, $action, $args = []){
-	    //等待开启的任务
-        //进行中的任务
-        //任务处理细节
-        //线程的开辟与回收
-        //如何分配任务到线程
-    }
+	 * 延迟执行的方法(非相应相关的业务逻辑都应该放在这个方法下)
+	 */
+	protected function delay(){}
 }

@@ -37,8 +37,11 @@ class zCoreConfig
 		define('APP_PATH', UNIFIED_PATH . 'app' . Z_DS . APP_DIR . Z_DS);//目录路径
 		define('APP_LOG_PATH', UNIFIED_PATH . 'log' . Z_DS . APP_DIR . Z_DS);//日志路径
 		define('APP_CACHE_PATH', TMPFS_PATH . 'cache' . Z_DS . APP_DIR . Z_DS);//静态缓存路径
-		//加载应用/模块的独有配置项 TODO 加载顺序及如何覆盖的问题
-		self::loadConfig('config');
+		//加载应用/模块的独有配置项
+		$appCfgFile = APP_PATH . 'config' . Z_DS .'config.php';
+		if(is_file($appCfgFile)){
+			self::$options = array_merge(self::$options, require $appCfgFile);
+		}
 		//修正静态资源相关设置
 		self::$options['static_domain'] = rtrim(self::$options['static_domain'], '/') . '/';
 		self::$options['static_suffix'] = trim(self::$options['static_suffix'], '|');

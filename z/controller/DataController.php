@@ -46,5 +46,6 @@ class zConDataController extends zCoreBase
 			}
 		}
 		zCoreResponse::setContentType('json')::setContent($json)::send();
+		$this->delay();
 	}
 }

@@ -18,7 +18,7 @@ trait zModSqlBuilder
 	private static $data			= [];
 	private static $limit			= '';
 	//以下参数不需要重置
-	private static $prefix			= 'z_';//表前缀名
+	private static $prefix			= '';//表前缀名
 	private static $partitionName	= '_mark';//分区所在的字段名(默认采用单一分区，不支持复合分区)
 	private static $dbModelType		= 'default';//数据库数据模型类型(对应mysql配置的数据模型类型)
 	private static $modelType		= 'default';//缓存数据模型类型(对应redis配置的数据模型类型)

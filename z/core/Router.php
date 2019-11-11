@@ -133,16 +133,22 @@ class zCoreRouter
 		 * 现需要把此种情况修正为同等于'http://www.4cm.com/admin/index'
 		 * 前提是未修正前指定的文件不存在
 		 */
+		$appName = zCoreRequest::get('a');
 		$domainMap = zCoreConfig::getDomainMap();
-		$defaultModule = $domainMap[0] ?? 'default';
-		if(zCoreRequest::get('a') == 'index'){
-			$transactionPath = UNIFIED_PATH . 'app' . Z_DS . $defaultModule . Z_DS . 'business' . Z_DS . zCoreRequest::get('b') . '.php';
+		if($appName == 'index'){
+			$appName = $domainMap[0] ?? 'default';
+			$transactionPath = UNIFIED_PATH . 'app' . Z_DS . $appName . Z_DS . 'business' . Z_DS . zCoreRequest::get('b') . '.php';
 			if(!is_file($transactionPath)){
-				zCoreRequest::get(['a'=>zCoreRequest::get('b'), 'b'=>zCoreRequest::get('a')]);
+				$appName = zCoreRequest::get('b');
+				zCoreRequest::get(['a'=>zCoreRequest::get('b'), 'b'=>'index']);
 			}
 		}
+		//判断是否允许访问当前应用/模块
+		if(!empty($domainMap) && !in_array($appName, $domainMap)){
+			trigger_error(T_NO_PERMISSION_MODULE, E_USER_ERROR);
+		}
 		//定义应用/模块目录和业务名称为常量
-		define('APP_DIR', zCoreRequest::get('a') == 'index' ? $defaultModule : zCoreRequest::get('a'));
+		define('APP_DIR', $appName);
 		define('APP_BUSINESS', zCoreRequest::get('b'));
 	}
 	

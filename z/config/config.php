@@ -2,17 +2,14 @@
 
 return [
 	
-	//错误提示模式(0友好提示，1明细提示)
-	'tips_mode'				=> 1,
-	
-	//应用绑定的域名(HTTP_HOST，空表示不绑定)
-	'bind_host'				=> '',
+	//调试模式(0关闭，1开启) 开启时，非致命错误的信息将保存到栈堆中，由业务逻辑控制处理方式；否则直接输出错误信息
+	'debug_mode'			=> 1,
 	
 	//应用是否采用HTTPS协议(0不采用，1采用)
 	'is_https'				=> 0,
 	
 	//静态资源的域名
-	'static_domain'			=> 'http://s.holdon.com',
+	'static_domain'			=> 'http://s.4cm.com',
 	
 	//静态资源后缀名(以|分割)
 	'static_suffix'			=> 'js|css|jpg|png|bmp|gif',

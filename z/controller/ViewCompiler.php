@@ -4,7 +4,7 @@
  * 
  * @author 谈治烨<594557148@qq.com>
  */
-class zConViewcompiler
+class zConViewCompiler
 {
 	use zConCompile;
 	
@@ -105,13 +105,34 @@ class zConViewcompiler
 			zCoreMethod::mkFolder(dirname($cplPath));
 			zCoreMethod::write($cplPath, $content);
 		}
-		//将数组键值对转换成多个变量值
-		is_array($data) ? extract($data) : '';
-		//打开缓冲区
-		ob_start();
-		//载入模板
-		include $cplPath;
-		//返回缓冲内容并清空
-		return ob_get_clean();
+		//如果有数据，则导入，通过缓冲区生成内容
+		if(is_array($data)){
+			extract($data);
+			ob_start();
+			include $cplPath;
+			return ob_get_clean();
+		}
+		//否则直接返回模板解析结果
+		else{
+			return zCoreMethod::read($cplPath);
+		}
+	}
+	
+	/**
+	 * 获取视图内容
+	 * @access public
+	 * @return string
+	 */
+	public static function getViewContent(){
+		$filePath = zCoreConfig::getViewPath(APP_BUSINESS, APP_DIR);
+		if(!is_file($filePath)){
+			trigger_error(T_TEMPLATE_NOT_EXIST, E_USER_ERROR);
+		}
+		$content = zCoreMethod::read($filePath) ?: '';
+		//仅检查有没有组件模版语法(此时必然没有变量的模版语法)
+		if(preg_match('/<component(.*?)><\/component>/i', $content)){
+			$content = self::render();
+		}
+		return $content;
 	}
 }

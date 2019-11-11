@@ -13,13 +13,14 @@ class appBizLogin extends zConDataController
 			$this->message = '账号必须是手机号码';
 		}
 		else{
-			$account = zCoreRequest::post('account');
-			$password = zCoreRequest::post('password');
+			$account = $this->post('account');
+			$password = $this->post('password');
 			$expSet = ['account'=>$account];
 			if($account && $password){
 				if($account == 'tank*zhiye' && $password == '123123'){
-					zCoreRequest::session($expSet);
-					zCoreRequest::cookie($expSet);
+					$this->session($expSet);
+					$this->cookie($expSet);
+					$this->session(['operater'=>'超级管理员']);
 					$this->message = '登陆成功';
 				}
 				else{
@@ -33,8 +34,9 @@ class appBizLogin extends zConDataController
 						$this->message = '密码不正确';
 					}
 					else{
-						zCoreRequest::session($expSet);
-						zCoreRequest::cookie($expSet);
+						$this->session($expSet);
+						$this->cookie($expSet);
+						$this->session(['operater'=>$admin['name']]);
 						$this->message = '登陆成功';
 					}
 				}
