@@ -59,22 +59,51 @@ var component_sidebar = {
 				$(window).off('mousemove selectstart');
 			})
 		}
-		//导航栏点击事件
-		$('#sidebarContent').on('click', 'nav li', function(){
-			$(this).find('ul').show().prev().addClass('active').closest('li').siblings().each(function(){
-				let tarObj = $(this).find('a');
-				if(tarObj.hasClass('active') && !tarObj.data('onpage')){
-					tarObj.removeClass('active');
-				}
-				tarObj.next().hide();
-			});
-			
-		});
 		//根据data-onpage标记当前页
 		$('#sidebarContent a').each(function(){
 			if($(this).data('onpage')){
 				$(this).addClass('active').closest('ul').show().prev().addClass('active').data('onpage', 1);
 			}
+		});
+		//注销登录
+		$('#logout').on("click", function(){
+			fcmDialog.set({
+				message: '正在退出登录',
+			}).show();
+			return false;
+			$.post(
+				'/4cm/logout',
+				function(res){
+					if(res.errno){
+						$('.alert').html(res.message).removeClass('d-none');
+						let elem = res.errno == 1 ? 'account' : 'password';
+						let _event = 'input propertychange';
+						$('#account, #password').off(_event);
+						$('#'+elem).on(_event, function(){
+							$('.alert').html(res.message).addClass('d-none');
+							$(this).off(elem);
+						});
+					}
+					else{
+						let urlArr = window.location.href.toString().split('//');
+						window.location.href = urlArr[0] + '//' + window.location.host + '/4cm/index';
+					}
+				}
+			);
+		});
+		//导航栏点击事件
+		$('#sidebarContent').on('click', 'nav li', function(){
+			$(this).find('ul').show().prev().addClass('active')
+			.find('i:last').removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down')
+			.closest('li').siblings().each(function(){
+				let tarObj = $(this).find('a');
+				if(tarObj.hasClass('active') && !tarObj.data('onpage')){
+					tarObj.removeClass('active');
+				}
+				tarObj.find('i:last').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+				tarObj.next().hide();
+			});
+			
 		});
 	},
 	//web端的滚动事件

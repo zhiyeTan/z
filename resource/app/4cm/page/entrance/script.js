@@ -10,12 +10,12 @@ $(function(){
 			},
 			function(res){
 				if(res.errno){
-					$('.alert').html(res.message).removeClass('hidden');
+					$('.alert').html(res.message).removeClass('d-none');
 					let elem = res.errno == 1 ? 'account' : 'password';
 					let _event = 'input propertychange';
 					$('#account, #password').off(_event);
 					$('#'+elem).on(_event, function(){
-						$('.alert').html(res.message).addClass('hidden');
+						$('.alert').html(res.message).addClass('d-none');
 						$(this).off(elem);
 					});
 				}

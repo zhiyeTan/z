@@ -9,6 +9,8 @@ class appPubViewController extends zConViewController
 			$this->goto(['b'=>'entrance']);
 		}
 		$this->assign('operater', $this->session('operater'));
-		$this->assign('title', '4cm');
+        $this->assign('title', '4cm');
+        $this->assign('keywords', '4cm');
+        $this->assign('description', '4cm');
 	}
 }

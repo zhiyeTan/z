@@ -41,21 +41,5 @@ class appBizEntrance extends appPubViewController
 //		$rev32 = str_pad(strtoupper(base_convert(strrev(time()).rand(0, 9), 10, 32)), 8, 0, STR_PAD_LEFT);
 //		echo $rev32;
 //		exit;
-
-        register_shutdown_function([$this, 't'], ...['first3', '2']);
-        register_shutdown_function([$this, 't'], 'second', 'sfs2');
-        register_shutdown_function([$this, 'e'], 'first', 'sdfs2');
-
-//        register_shutdown_function([$this, 't'], ['first', '2']);
-//        register_shutdown_function([$this, 't'], ['second', '2']);
-//        register_shutdown_function([$this, 'e'], ['first', '2']);
-    }
-
-    public function t($str, $str2){
-        echo 't -> ',$str,'*',$str2,'<br>';
-    }
-
-    public function e($str, $str2){
-        echo 'e -> ',$str,'*',$str2,'<br>';
     }
 }

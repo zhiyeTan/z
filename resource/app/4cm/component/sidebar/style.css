@@ -48,6 +48,9 @@
 	font-size: 15px;
 	font-weight: 700;
 }
+#logout{
+	margin-left: 4px;
+}
 #sidebar nav{
 	font-size: 14px;
 }
