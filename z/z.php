@@ -46,7 +46,7 @@ class z
 			//模型类统一放在model目录下
 			$filePath .= $words[0] == 'm' ? 'model' . Z_DS : '';
 			//app下的类已经带上了第一个参数
-			$filePath .= $words[0] != 'app' ? (self::$dirAliasMap[$words[0]] ?? $words[0]) . Z_DS : '';
+            $filePath .= !in_array($words[0], ['app', 'm']) ? (self::$dirAliasMap[$words[0]] ?? $words[0]) . Z_DS : '';
 			$filePath .= (self::$dirAliasMap[$words[1]] ?? $words[1]) . Z_DS;
 			$filePath .= substr($className, strlen($words[0] . $words[1])) . '.php';
 			if(is_file($filePath)){

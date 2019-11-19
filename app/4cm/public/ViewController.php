@@ -12,5 +12,10 @@ class appPubViewController extends zConViewController
         $this->assign('title', '4cm');
         $this->assign('keywords', '4cm');
         $this->assign('description', '4cm');
+        $mai = new mAdminInfo();
+        $rs = $mai->getInfoMap('13580564273');
+        echo '<pre>';
+        print_r($rs);
+        exit;
 	}
 }

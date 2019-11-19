@@ -2,6 +2,7 @@ $(function(){
 	$('#loginForm').on('submit', function(){
 		let account = $('#account').val();
 		let pwd = $('#password').val();
+		Backdrop.showLoading();
 		$.post(
 			'/4cm/login',
 			{
@@ -9,6 +10,7 @@ $(function(){
 				password: pwd
 			},
 			function(res){
+				Backdrop.hideLoading();
 				if(res.errno){
 					$('.alert').html(res.message).removeClass('d-none');
 					let elem = res.errno == 1 ? 'account' : 'password';
@@ -20,8 +22,7 @@ $(function(){
 					});
 				}
 				else{
-					let urlArr = window.location.href.toString().split('//');
-					window.location.href = urlArr[0] + '//' + window.location.host + '/4cm/index';
+					window.location.href = '/4cm/index';
 				}
 			}
 		);

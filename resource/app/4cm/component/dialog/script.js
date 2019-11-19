@@ -1,10 +1,12 @@
-var fcmDialog = {
+var Dialog = {
 	/**
 	 * @param {Object} args 样式参数
-	 * title 对话框标题
-	 * message 对话框提示信息
-	 * btnyes 是否显示确认按钮
-	 * btnno 是否显示取消按钮
+	 * {
+	 *     title: 对话框标题
+	 *     message: 对话框提示信息
+	 *     btnyes: 是否显示确认按钮
+	 *     btnno: 是否显示取消按钮
+	 * }
 	 */
 	set: function(args){
 		$('#fcmDialogTitle').html(args.title ? args.title : '系统提示');
@@ -21,6 +23,10 @@ var fcmDialog = {
 		else{
 			$('#fcmBtnNo').show();
 		}
+		//绑定默认的点击事件
+		$('#fcmBtnYes,#fcmBtnNo').off('click').on('click', function(){
+			$('#fcmDialog').modal('hide');
+		});
 		return this;
 	},
 	/**

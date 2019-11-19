@@ -67,26 +67,18 @@ var component_sidebar = {
 		});
 		//注销登录
 		$('#logout').on("click", function(){
-			fcmDialog.set({
-				message: '正在退出登录',
-			}).show();
-			return false;
+			Backdrop.showLoading();
 			$.post(
 				'/4cm/logout',
 				function(res){
 					if(res.errno){
-						$('.alert').html(res.message).removeClass('d-none');
-						let elem = res.errno == 1 ? 'account' : 'password';
-						let _event = 'input propertychange';
-						$('#account, #password').off(_event);
-						$('#'+elem).on(_event, function(){
-							$('.alert').html(res.message).addClass('d-none');
-							$(this).off(elem);
-						});
+						Dialog.set({
+							message: res.message
+						}).show();
+						return false;
 					}
 					else{
-						let urlArr = window.location.href.toString().split('//');
-						window.location.href = urlArr[0] + '//' + window.location.host + '/4cm/index';
+						window.location.href = '/4cm/entrance';
 					}
 				}
 			);
