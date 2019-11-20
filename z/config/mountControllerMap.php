@@ -38,7 +38,6 @@ return [
 	'ip'				=> ['zCoreRequest', 'ip'],
 	'setCode'			=> ['zCoreResponse', 'setCode'],
 	'setExpire'			=> ['zCoreResponse', 'setExpire'],
-	'goto'				=> ['zCoreRouter', 'goto'],
 	'mkUrl'				=> ['zCoreRouter', 'mkUrl'],
 	'getSqlStack'		=> ['zModDataBase', 'getSqlStack'],
 	'listDirTree'		=> ['zCoreMethod', 'listDirTree'],

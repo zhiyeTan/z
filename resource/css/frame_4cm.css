@@ -8,13 +8,19 @@ body{
 #container{
 	position: absolute;
 	box-sizing: border-box;
-	padding: 30px;
+	padding: 20px;
 	top: 0;
 	left: 240px;
 	right: 0;
 	bottom: 0;
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+.container-row{
+	padding: 15px;
+	background: white;
+	border-radius: 4px;
+	margin-bottom: 20px;
 }
 /*主体框架部分样式end*/
 

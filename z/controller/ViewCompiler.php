@@ -28,12 +28,19 @@ class zConViewCompiler
 		foreach($res[1] as $k => $v){
 			//取得ID信息，对应模版所在的应用/模块目录以及文件名
 			preg_match('/id="(.*?)"/i', $v, $file);
-			$dirName = APP_DIR;
+			$appDir = APP_DIR;
+			$moduleDir = '';
 			$fileName = $file[1];
 			if(stripos($file[1], '.') > 0){
 				$tmp = explode('.', $file[1]);
-				$dirName = $tmp[0];
-				$fileName = $tmp[1];
+                $appDir = $tmp[0];
+				if(count($tmp) > 2){
+                    $moduleDir = $tmp[1];
+                    $fileName = $tmp[2];
+                }
+				else{
+                    $fileName = $tmp[1];
+                }
 			}
 			//取得API信息，通过接口地址获取数据，允许为空
 			preg_match('/api="(.*?)"/i', $v, $api);
@@ -41,15 +48,15 @@ class zConViewCompiler
 			//取得KEEP信息，判断是否保留component标签
 			preg_match('/keep="(.*?)"/i', $v, $keep);
 			if(empty($keep[1])){
-				$pattern[$res[0][$k]] = zConComponentCompiler::render($dirName, $fileName, $data);
+				$pattern[$res[0][$k]] = zConComponentCompiler::render($appDir, $moduleDir, $fileName, $data);
 			}
 			else{
-				$newTag = '<component' . preg_replace('/(id=")(.*?)(")/i', '\\1'.$dirName.'.'.$fileName.'\\3', $v) . '>';
-				$pattern[$res[0][$k]] = $newTag . zConComponentCompiler::render($dirName, $fileName, $data) . '</component>';
+				$newTag = '<component' . preg_replace('/(id=")(.*?)(")/i', '\\1'.$appDir.'.'.$fileName.'\\3', $v) . '>';
+				$pattern[$res[0][$k]] = $newTag . zConComponentCompiler::render($appDir, $moduleDir, $fileName, $data) . '</component>';
 			}
 			//取得ATTACH信息，判断是否需要引用css
 			preg_match('/attach="(.*?)"/i', $v, $attach);
-			self::attachHandle($attach[1] ?? '', $dirName, $fileName);
+			self::attachHandle($attach[1] ?? '', $appDir, $moduleDir, $fileName);
 		}
 		return strtr($content, $pattern);
 	}
@@ -58,33 +65,37 @@ class zConViewCompiler
 	 * 附加资源处理器
 	 * @access private
 	 * @param  string  $attachStr       附加信息
-	 * @param  string  $moduleName      应用/模块名
+     * @param  string  $appName         应用名
+     * @param  string  $moduleName      模块名
 	 * @param  string  $businessName    业务名称
 	 * @param  bool    $isPage          是否为页面资源(false表示组件资源)
 	 */
-	private static function attachHandle($attachStr, $moduleName, $businessName, $isPage = false){
+	private static function attachHandle($attachStr, $appName, $moduleName, $businessName, $isPage = false){
 		//包含样式
 	    if(preg_match('/all|css/i', $attachStr)){
-	        self::$tags .= zCoreConfig::getResourceTag($moduleName, $businessName, 0, $isPage) . PHP_EOL;
+	        self::$tags .= zCoreConfig::getResourceTag($appName, $moduleName, $businessName, 0, $isPage) . PHP_EOL;
 	    }
 	    //包含脚本
 	    if(preg_match('/all|js/i', $attachStr)){
-	        self::$tags .= zCoreConfig::getResourceTag($moduleName, $businessName, 1, $isPage) . PHP_EOL;
+	        self::$tags .= zCoreConfig::getResourceTag($appName, $moduleName, $businessName, 1, $isPage) . PHP_EOL;
 	    }
 	}
 	
 	/**
 	 * 渲染视图模板
 	 * @access public
-	 * @param  array   $data      要导入的数据
-	 * @param  string  $viewName  公共视图名
+	 * @param  array   $data        要导入的数据
+     * @param  string  $viewName    视图名
+     * @param  string  $moduleName  模块名
+     * @param  string  $appName     应用名
 	 * @return string
 	 */
-	public static function render($data = '', $viewName = '', $moduleName = ''){
-		$businessName = $viewName ?: APP_BUSINESS;
-		$moduleName = $moduleName ?: APP_DIR;
-		$tplPath = zCoreConfig::getViewPath($businessName, $moduleName);
-		$cplPath = zCoreConfig::getViewPath($businessName, $moduleName, true, true);
+	public static function render($data = '', $viewName = '', $moduleName = '', $appName = ''){
+        $appName = $appName ?: APP_DIR;
+        $moduleName = $moduleName ?: APP_MODULE;
+        $businessName = $viewName ?: APP_BUSINESS;
+		$tplPath = zCoreConfig::getViewPath($appName, $moduleName, $businessName);
+		$cplPath = zCoreConfig::getViewPath($appName, $moduleName, $businessName, true, true);
 		if(!zCoreConfig::$options['compile_enable'] || !is_file($cplPath)){
 			//模版不存在，抛出异常
 			if(!is_file($tplPath)){
@@ -94,7 +105,7 @@ class zConViewCompiler
 			if($content){
 				//匹配META标签，判断是否需要添加页面样式
 				preg_match('/<meta attach="(.*?)">/i', $content, $attach);
-				self::attachHandle($attach[1] ?? '', $moduleName, $businessName, true);
+				self::attachHandle($attach[1] ?? '', $appName, $moduleName, $businessName, true);
 				//编译模板内容
 				$content = self::compile(self::parseComponent($content));
 				if(self::$tags){
@@ -124,7 +135,7 @@ class zConViewCompiler
 	 * @return string
 	 */
 	public static function getViewContent(){
-		$filePath = zCoreConfig::getViewPath(APP_BUSINESS, APP_DIR);
+		$filePath = zCoreConfig::getViewPath(APP_DIR,APP_MODULE,APP_BUSINESS);
 		if(!is_file($filePath)){
 			trigger_error(T_TEMPLATE_NOT_EXIST, E_USER_ERROR);
 		}

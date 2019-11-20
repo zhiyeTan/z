@@ -48,11 +48,20 @@ class z
 			//app下的类已经带上了第一个参数
             $filePath .= !in_array($words[0], ['app', 'm']) ? (self::$dirAliasMap[$words[0]] ?? $words[0]) . Z_DS : '';
 			$filePath .= (self::$dirAliasMap[$words[1]] ?? $words[1]) . Z_DS;
-			$filePath .= substr($className, strlen($words[0] . $words[1])) . '.php';
-			if(is_file($filePath)){
-				include $filePath;
+			$fileName = substr($className, strlen($words[0].$words[1])) . '.php';
+			if(is_file($filePath.$fileName)){
+				include $filePath.$fileName;
 				return true;
 			}
+			//app下允许二级目录，方便做文件管理
+			elseif($words[0] == 'app'){
+                $filePath .= strtolower($words[2]) . Z_DS;
+                $fileName = substr($className, strlen($words[0].$words[1].$words[2])) . '.php';
+                if(is_file($filePath.$fileName)){
+                    include $filePath.$fileName;
+                    return true;
+                }
+            }
 		}
 		//其次检查映射
 		if(!self::$loaded){

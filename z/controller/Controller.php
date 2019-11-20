@@ -38,6 +38,20 @@ trait zConController
 		$this->cacheName = APP_DIR . '-' . APP_BUSINESS . '-' . md5(http_build_query($param));
 		$this->cache = zModCache::getAppDataCache($this->cacheName);
 	}
+
+    /**
+     * 跳转到指定参数的地址
+     * @access public
+     * @param  array   $args     参数键值对数组
+     * @param  int     $pattern  路由模式
+     * @param  string  $domain   完整域名（包含协议部分）
+     * @param  string  $suffix   后缀名
+     */
+    public static function goto($args, $pattern = DEFAULT_ROUTER_MODEL, $domain = '', $suffix = 'html'){
+        $url = is_string($args) ? $args : zCoreRouter::mkUrl($args, $pattern, $domain, $suffix);
+        header('Location:'.$url);
+        exit;
+    }
 	
 	/**
 	 * 赋值到数据栈中

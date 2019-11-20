@@ -67,12 +67,13 @@ class zCoreConfig
 	/**
 	 * 获取资源直属目录
 	 * @access private
-	 * @param  string  $businessName    业务名称(非类名)
+	 * @param  string  $businessName    业务名称
+     * @param  string  $moduleName      模块名
 	 * @param  bool    $pageView        是否为页面视图
 	 * @param  bool    $isViewRes       是否为视图资源
 	 * @return string
 	 */
-	private static function getUnderDir(&$businessName, $pageView = true, $isViewRes = true){
+	private static function getUnderDir(&$businessName, $moduleName, $pageView = true, $isViewRes = true){
 		//当前业务名称和前端渲染模式的业务名称一致，即当渲染SPA的起始页
 		if(APP_BUSINESS == FERM_BUSINESS){
 			$underDir = FERM_BUSINESS;
@@ -82,7 +83,7 @@ class zCoreConfig
 		else{
 			$underDir = $pageView ? 'page' : 'component';
 			//后端渲染的视图资源还有一个与业务同名的层级
-			$underDir .= $isViewRes ? Z_DS . $businessName : '';
+			$underDir .= $isViewRes ? Z_DS . $moduleName . Z_DS . $businessName : '';
 		}
 		return $underDir;
 	}
@@ -90,43 +91,45 @@ class zCoreConfig
 	/**
 	 * 获取模版路径
 	 * @access public
-	 * @param  string  $businessName    业务名称(非类名)
-	 * @param  string  $moduleName      应用/模块名
+     * @param  string  $appName         应用名
+     * @param  string  $moduleName      模块名
+     * @param  string  $businessName    业务名称
 	 * @param  bool    $pageView        是否为页面视图
 	 * @param  bool    $complied        是否为编译文件
 	 * @return path
 	 */
-	public static function getViewPath($businessName, $moduleName, $pageView = true, $complied = false){
+	public static function getViewPath($appName, $moduleName, $businessName, $pageView = true, $complied = false){
 		//应用/模块名
-		$moduleName = $moduleName ?: APP_DIR;
+        $appName = $appName ?: APP_DIR;
 		//资源直属目录
-		$underDir = self::$noViewSubDir ? "" : self::getUnderDir($businessName, $pageView, !$complied);
+		$underDir = self::$noViewSubDir ? "" : self::getUnderDir($businessName, $moduleName, $pageView, !$complied);
 		//文件名
 		$fileName = $complied ? $businessName . '.php' : 'struct.htm';
 		if(!$complied && self::$noViewSubDir){
-		    return APP_RESOURCE_PATH . $moduleName . Z_DS . 'index.html';
+		    return APP_RESOURCE_PATH . $appName . Z_DS . 'index.html';
 		}
 		//返回拼接好的路径
-		return ($complied ? COMPILED_PATH : APP_RESOURCE_PATH) . $moduleName . Z_DS . $underDir . Z_DS . $fileName;
+		return ($complied ? COMPILED_PATH : APP_RESOURCE_PATH) . $appName . Z_DS . $underDir . Z_DS . $fileName;
 	}
 	
 	/**
 	 * 获取静态资源标签
 	 * @access public
-	 * @param  string  $moduleName      应用/模块名
-	 * @param  string  $businessName    业务名称(非类名)
+     * @param  string  $appName         应用名
+     * @param  string  $moduleName      模块名
+	 * @param  string  $businessName    业务名称
 	 * @param  int     $type            资源类型(0样式，1脚本)
 	 * @param  bool    $isPage          是否为页面资源
 	 * @return string
 	 */
-	public static function getResourceTag($moduleName, $businessName, $type, $isPage){
+	public static function getResourceTag($appName, $moduleName, $businessName, $type, $isPage){
 		$tag = [
 			'<link rel="stylesheet" type="text/css" href="%s">',//样式标签
 			'<script type="text/javascript" src="%s"></script>'//脚本标签
 		];
-		$underDir = strtr(self::getUnderDir($businessName, $isPage), Z_DS, '/');
+		$underDir = strtr(self::getUnderDir($businessName, $moduleName, $isPage), Z_DS, '/');
 		//TODO '?v='.time();//版本号根据具体需求调整，当前写法与浏览器缓存时间一致
-		$url = '/' . APP_RESOURCE_DIR . '/' . $moduleName . '/' . $underDir . '/' . ($type ? 'script.js' : 'style.css');
+		$url = '/' . APP_RESOURCE_DIR . '/' . $appName . '/' . $underDir . '/' . ($type ? 'script.js' : 'style.css');
 		return sprintf($tag[$type], $url);
 	}
 	

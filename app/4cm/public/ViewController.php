@@ -6,7 +6,7 @@ class appPubViewController extends zConViewController
 		parent::__construct();
 		//未登录或过期，自动跳转到入口页面
 		if(strtolower(APP_BUSINESS) != 'entrance' && (!$this->session('account') || $this->session('account') != $this->cookie('account'))){
-			$this->goto(['b'=>'entrance']);
+			$this->goto(['m'=>'', 'b'=>'entrance']);
 		}
 		$this->assign('operater', $this->session('operater'));
         $this->assign('title', '4cm');
@@ -14,8 +14,5 @@ class appPubViewController extends zConViewController
         $this->assign('description', '4cm');
         $mai = new mAdminInfo();
         $rs = $mai->getInfoMap('13580564273');
-        echo '<pre>';
-        print_r($rs);
-        exit;
 	}
 }

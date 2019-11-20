@@ -12,22 +12,7 @@
 class zCoreRouter
 {
 	private function __construct(){}//静态类，不允许实例化
-	
-	/**
-	 * 跳转到指定参数的地址
-	 * TODO 转移到controller里面去
-	 * @access public
-	 * @param  array   $args     参数键值对数组
-	 * @param  int     $pattern  路由模式
-	 * @param  string  $domain   完整域名（包含协议部分）
-	 * @param  string  $suffix   后缀名
-	 */
-	public static function goto($args, $pattern = DEFAULT_ROUTER_MODEL, $domain = '', $suffix = 'html'){
-		$url = is_string($args) ? $args : self::mkUrl($args, $pattern, $domain, $suffix);
-		header('Location:'.$url);
-		exit;
-	}
-	
+
 	/**
 	 * 创建Url
 	 * @access public
@@ -39,7 +24,7 @@ class zCoreRouter
 	 */
 	public static function mkUrl($args, $pattern = DEFAULT_ROUTER_MODEL, $domain = '', $suffix = 'html'){
 		$url = trim($domain, '/') . '/';
-		$args = array_merge(['a'=>APP_DIR, 'b'=>APP_BUSINESS], $args);
+		$args = array_merge(['a'=>APP_DIR, 'm'=>APP_MODULE, 'b'=>APP_BUSINESS], $args);
 		ksort($args);
 		//短地址模式
 		if($pattern == SHORTURL_ROUTER_MODEL){
@@ -74,8 +59,11 @@ class zCoreRouter
 			if($pattern == DIRECTORY_ROUTER_MODEL || $args['a'] != 'index'){
 				$url .= $args['a'] . '/';
 			}
+			if(!empty($args['m'])){
+			    $url .= $args['m'] . '/';
+            }
 			$url .= $args['b'] . $separator;
-			unset($args['a'], $args['b']);
+			unset($args['a'], $args['m'], $args['b']);
 			$url .= strtr(http_build_query($args), '=&', $separator);
 			$url  = trim($url, $separator);
 		}
@@ -121,34 +109,23 @@ class zCoreRouter
 					$strRequest = strpos($strRequest, '/') ? str_replace('/', '-', $strRequest) : 'index-' . $strRequest;
 				}
 				$tmpArr = explode($separator, trim($strRequest, $separator));
-				$arrRequest = self::switchArray($tmpArr);
+				$arrRequest = self::calibrateAppUrlparam($tmpArr);
 			}
 		}
-		self::correctArrayBasicParam($arrRequest);
+        $arrRequest['a'] = $arrRequest['a'] ?? 'index';
+        $arrRequest['m'] = $arrRequest['m'] ?? '';
+        $arrRequest['b'] = $arrRequest['b'] ?? 'index';
 		zCoreRequest::get($arrRequest);
-		/**
-		 * 修正请求地址仅有应用/模块名的情况(即访问的是应用/模块的首页index)
-		 * 此时地址形式类似'http://www.4cm.com/admin'
-		 * 未修正前，这个形式的地址实际上等同于'http://www.4cm.com/index/admin'
-		 * 现需要把此种情况修正为同等于'http://www.4cm.com/admin/index'
-		 * 前提是未修正前指定的文件不存在
-		 */
 		$appName = zCoreRequest::get('a');
 		$domainMap = zCoreConfig::getDomainMap();
-		if($appName == 'index'){
-			$appName = $domainMap[0] ?? 'default';
-			$transactionPath = UNIFIED_PATH . 'app' . Z_DS . $appName . Z_DS . 'business' . Z_DS . zCoreRequest::get('b') . '.php';
-			if(!is_file($transactionPath)){
-				$appName = zCoreRequest::get('b');
-				zCoreRequest::get(['a'=>zCoreRequest::get('b'), 'b'=>'index']);
-			}
-		}
+        $appName = $appName == 'index' ? $domainMap[0] ?? 'default' : $appName;
 		//判断是否允许访问当前应用/模块
 		if(!empty($domainMap) && !in_array($appName, $domainMap)){
 			trigger_error(T_NO_PERMISSION_MODULE, E_USER_ERROR);
 		}
 		//定义应用/模块目录和业务名称为常量
-		define('APP_DIR', $appName);
+        define('APP_DIR', $appName);
+        define('APP_MODULE', zCoreRequest::get('m'));
 		define('APP_BUSINESS', zCoreRequest::get('b'));
 	}
 	
@@ -165,33 +142,41 @@ class zCoreRouter
 	}
 	
 	/**
-	 * 转换数组
+	 * 校正应用的URL参数
 	 * @access private
-	 * @param  array  $args  要转换的数组
+	 * @param  array  $target  待校正的数组
 	 * @return array
 	 */
-	private static function switchArray($args){
-		$res = [];
-		$tmpArr = ['a', 'b'];
-		foreach($args as $k => $v){
-			if(isset($tmpArr[$k])){
-				$res[$tmpArr[$k]] = $v;
-				continue;
-			}
-			if($k % 2 == 0){
-				$tk = $k + 1;
-				$res[$v] = $args[$tk] ?? '';
-			}
-		}
-		return $res;
-	}
-	
-	/**
-	 * 修正数组中的基本URL参数
-	 * @access private
-	 */
-	private static function correctArrayBasicParam(&$target){
-		$target['a'] = $target['a'] ?? 'index';
-		$target['b'] = $target['b'] ?? 'index';
-	}
+    private static function calibrateAppUrlparam($target){
+        $a = $target[0] ?? 'index';
+        $m = $target[1] ?? '';
+        $b = $target[2] ?? 'index';
+        $path = UNIFIED_PATH . 'app' . Z_DS . '%s' . Z_DS . 'business' . Z_DS . '%s' . Z_DS . '%s' . '.php';
+        $domainMap = zCoreConfig::getDomainMap();
+        $indexDir = $domainMap[0] ?? 'default';
+        $appDir = $a == 'index' ? $indexDir : $a;
+        $filePath = sprintf($path, $appDir, $m, $b);
+        $startIndex = 2;
+        if(is_file(sprintf($path, $appDir, $m, $b))){
+            $startIndex = 3;
+        }
+        else{
+            $m = '';
+            $b = $target[1] ?? 'index';
+            if(!is_file(sprintf($path, $appDir, $m, $b))){
+                $a = 'index';
+                $appDir = $indexDir;
+            }
+        }
+        $target = array_slice($target, $startIndex);
+        $args = [];
+        foreach($target as $k => $v){
+            if($k % 2 == 0){
+                $tk = $k + 1;
+                $args[$v] = $target[$tk] ?? '';
+            }
+        }
+        return array_merge(['a'=>$a, 'm'=>$m, 'b'=>$b], $args);
+    }
+
 }

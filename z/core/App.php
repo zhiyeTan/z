@@ -19,10 +19,10 @@ class zCoreApp
 		//加载应用配置
 		zCoreConfig::configure();
 		//业务逻辑存在
-		if(is_file(APP_PATH . 'business' . Z_DS . APP_BUSINESS . '.php')){
+		if(is_file(APP_PATH . 'business' . Z_DS . APP_MODULE . Z_DS . APP_BUSINESS . '.php')){
 			zCoreException::inBusiness();
 			//执行业务逻辑
-			$className = 'appBiz' . ucfirst(strtolower(APP_BUSINESS));
+			$className = 'appBiz' . ucfirst(strtolower(APP_MODULE)) . ucfirst(strtolower(APP_BUSINESS));
 			$object = new $className();
 			$object->display();
 		}
