@@ -48,6 +48,11 @@
 	font-size: 15px;
 	font-weight: 700;
 }
+.mobile-nav-icon{
+	display: none;
+	padding-top: 6px;
+	font-size: 2em;
+}
 #logout{
 	margin-left: 4px;
 }
@@ -75,7 +80,34 @@
 
 @media only screen and (max-width: 640px) {
 	#sidebar {
-		/*left: -200px;*/
-		left: 0;
+		position: static;
+		width: auto;
+	}
+	#sideScrollBar{
+		display: none;
+	}
+	#sidebarContent{
+		padding: 20px;
+	}
+	#sidebar .admin-box{
+		padding: 0;
+	}
+	#sidebar nav{
+		display: none;
+	}
+	.mobile-nav-icon{
+		display: block;
+	}
+	#sidebar nav{
+		margin-top: 20px;
+	}
+	#sidebar nav > li{
+		margin-top: 5px;
+	}
+	#sidebar nav a{
+		padding: 5px 0;
+	}
+	#sidebar ul{
+		margin-bottom: 0;
 	}
 }

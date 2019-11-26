@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta attach="">
+		<meta attach="all">
 		<meta charset="UTF-8">
 		<title>{{title}}</title>
 		<meta name="Keywords" content="{{keywords}}"/>
@@ -16,11 +16,45 @@
 			</div>
 			<div class="container-row form-inline">
 				<select class="form-control">
-					<option value="1">管理员名字</option>
-					<option value="2">站点名</option>
+					<option value="1">站点名</option>
 				</select>
 				<input type="text" id="keyword" class="form-control" />
 				<button type="button" class="btn btn-primary">搜索</button>
+			</div>
+			<div class="container-row">
+				<div class="table-responsive">
+					<table class="table">
+						<thead>
+							<tr>
+								<th>名称</th>
+                                <th>标题</th>
+								<th>描述</th>
+                                <th>操作</th>
+							</tr>
+						</thead>
+						<tbody>
+                            <tr>
+                                <td>产品1</td>
+                                <td>23/11/2013</td>
+                                <td>待发货</td>
+                                <td>待发货</td>
+                            </tr>
+                            <tr>
+                                <td>产品1</td>
+                                <td>23/11/2013</td>
+                                <td>待发货</td>
+                                <td>待发货</td>
+                            </tr>
+                            <tr>
+                                <td>产品1</td>
+                                <td>23/11/2013</td>
+                                <td>待发货</td>
+                                <td>待发货</td>
+                            </tr>
+						</tbody>
+					</table>
+				</div>
+				<div id="pagination"></div>
 			</div>
 		</div>
 		<component id="footer" attach="js"></component>
