@@ -62,4 +62,23 @@ trait zConCompile
 		$content = preg_replace('/$([A-Z_]+)/', '\\1', $content);
 		return $content;
 	}
+
+    /**
+     * 获取模版路径
+     * @access private
+     * @param  string  $appid       应用名
+     * @param  string  $module      模块名
+     * @param  string  $business    业务名
+     * @param  bool    $pageView    是否为页面视图
+     * @param  bool    $complied    是否为编译文件
+     * @return path
+     */
+    private static function getViewPath($appid, $module, $business, $pageView = true, $complied = false){
+        $path  = $complied ? COMPILED_PATH : APP_RESOURCE_PATH;
+        $path .= $appid . Z_DS;
+        $path .= $pageView ? 'page' : 'component';
+        $path .= Z_DS . $module . Z_DS . $business . Z_DS;
+        $path .= $complied ? $business . '.php' : 'struct.htm';
+        return $path;
+    }
 }

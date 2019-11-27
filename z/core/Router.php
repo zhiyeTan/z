@@ -24,7 +24,7 @@ class zCoreRouter
 	 */
 	public static function mkUrl($args, $pattern = DEFAULT_ROUTER_MODEL, $domain = '', $suffix = 'html'){
 		$url = trim($domain, '/') . '/';
-		$args = array_merge(['a'=>APP_DIR, 'm'=>APP_MODULE, 'b'=>APP_BUSINESS], $args);
+		$args = array_merge(['a'=>zCoreRequest::appid(), 'm'=>zCoreRequest::module(), 'b'=>zCoreRequest::business()], $args);
 		ksort($args);
 		//短地址模式
 		if($pattern == SHORTURL_ROUTER_MODEL){
@@ -56,7 +56,7 @@ class zCoreRouter
 		//默认模式和目录模式的结构类似，可兼容处理
 		else{
 			$separator = $pattern == DIRECTORY_ROUTER_MODEL ? '/' : '-';
-			if($pattern == DIRECTORY_ROUTER_MODEL || $args['a'] != 'index'){
+			if($pattern == DIRECTORY_ROUTER_MODEL || $args['a'] != 'default'){
 				$url .= $args['a'] . '/';
 			}
 			if(!empty($args['m'])){
@@ -106,27 +106,38 @@ class zCoreRouter
 			else{
 				$separator = $pattern == DEFAULT_ROUTER_MODEL ? '-' : '/';
 				if($pattern == DEFAULT_ROUTER_MODEL){
-					$strRequest = strpos($strRequest, '/') ? str_replace('/', '-', $strRequest) : 'index-' . $strRequest;
+					$strRequest = strpos($strRequest, '/') ? str_replace('/', '-', $strRequest) : 'default-' . $strRequest;
 				}
 				$tmpArr = explode($separator, trim($strRequest, $separator));
-				$arrRequest = self::calibrateAppUrlparam($tmpArr);
+                $arrRequest['a'] = $tmpArr[0];
+                $arrRequest['m'] = $tmpArr[1] ?? '';
+                $arrRequest['b'] = $tmpArr[2] ?? 'index';
+                $startIndex = zCoreApp::checkBusiness($arrRequest['a'], $arrRequest['m'], $arrRequest['b']) ? 3 : 2;
+                if($startIndex == 2){
+                    $arrRequest['m'] = '';
+                    $arrRequest['b'] = $tmpArr[1] ?? 'index';
+                }
+                $tmpArr = array_slice($tmpArr, $startIndex);
+                foreach($tmpArr as $k => $v){
+                    if($k % 2 == 0){
+                        $arrRequest[$v] = $tmpArr[$k + 1] ?? '';
+                    }
+                }
 			}
 		}
-        $arrRequest['a'] = $arrRequest['a'] ?? 'index';
+        $arrRequest['a'] = $arrRequest['a'] ?? 'default';
         $arrRequest['m'] = $arrRequest['m'] ?? '';
         $arrRequest['b'] = $arrRequest['b'] ?? 'index';
 		zCoreRequest::get($arrRequest);
-		$appName = zCoreRequest::get('a');
 		$domainMap = zCoreConfig::getDomainMap();
-        $appName = $appName == 'index' ? $domainMap[0] ?? 'default' : $appName;
 		//判断是否允许访问当前应用/模块
-		if(!empty($domainMap) && !in_array($appName, $domainMap)){
+		if(!empty($domainMap) && !in_array($arrRequest['a'], $domainMap)){
 			trigger_error(T_NO_PERMISSION_MODULE, E_USER_ERROR);
 		}
 		//定义应用/模块目录和业务名称为常量
-        define('APP_DIR', $appName);
-        define('APP_MODULE', zCoreRequest::get('m'));
-		define('APP_BUSINESS', zCoreRequest::get('b'));
+        define('APP_ID', $arrRequest['a']);
+        define('APP_MODULE', $arrRequest['m']);
+		define('APP_BUSINESS', $arrRequest['b']);
 	}
 	
 	/**
@@ -140,43 +151,4 @@ class zCoreRouter
 		$replacement = '\1' . zCoreConfig::$options['static_domain'] . '\3\5\6';
 		return preg_replace($pattern, $replacement, $content);
 	}
-	
-	/**
-	 * 校正应用的URL参数
-	 * @access private
-	 * @param  array  $target  待校正的数组
-	 * @return array
-	 */
-    private static function calibrateAppUrlparam($target){
-        $a = $target[0] ?? 'index';
-        $m = $target[1] ?? '';
-        $b = $target[2] ?? 'index';
-        $path = UNIFIED_PATH . 'app' . Z_DS . '%s' . Z_DS . 'business' . Z_DS . '%s' . Z_DS . '%s' . '.php';
-        $domainMap = zCoreConfig::getDomainMap();
-        $indexDir = $domainMap[0] ?? 'default';
-        $appDir = $a == 'index' ? $indexDir : $a;
-        $filePath = sprintf($path, $appDir, $m, $b);
-        $startIndex = 2;
-        if(is_file(sprintf($path, $appDir, $m, $b))){
-            $startIndex = 3;
-        }
-        else{
-            $m = '';
-            $b = $target[1] ?? 'index';
-            if(!is_file(sprintf($path, $appDir, $m, $b))){
-                $a = 'index';
-                $appDir = $indexDir;
-            }
-        }
-        $target = array_slice($target, $startIndex);
-        $args = [];
-        foreach($target as $k => $v){
-            if($k % 2 == 0){
-                $tk = $k + 1;
-                $args[$v] = $target[$tk] ?? '';
-            }
-        }
-        return array_merge(['a'=>$a, 'm'=>$m, 'b'=>$b], $args);
-    }
-
 }

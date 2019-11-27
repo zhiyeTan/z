@@ -28,18 +28,18 @@ class zConViewCompiler
 		foreach($res[1] as $k => $v){
 			//取得ID信息，对应模版所在的应用/模块目录以及文件名
 			preg_match('/id="(.*?)"/i', $v, $file);
-			$appDir = APP_DIR;
-			$moduleDir = '';
-			$fileName = $file[1];
+			$appid = zCoreRequest::appid();
+			$module = '';
+			$business = $file[1];
 			if(stripos($file[1], '.') > 0){
 				$tmp = explode('.', $file[1]);
-                $appDir = $tmp[0];
+                $appid = $tmp[0];
 				if(count($tmp) > 2){
-                    $moduleDir = $tmp[1];
-                    $fileName = $tmp[2];
+                    $module = $tmp[1];
+                    $business = $tmp[2];
                 }
 				else{
-                    $fileName = $tmp[1];
+                    $business = $tmp[1];
                 }
 			}
 			//取得API信息，通过接口地址获取数据，允许为空
@@ -48,15 +48,15 @@ class zConViewCompiler
 			//取得KEEP信息，判断是否保留component标签
 			preg_match('/keep="(.*?)"/i', $v, $keep);
 			if(empty($keep[1])){
-				$pattern[$res[0][$k]] = zConComponentCompiler::render($appDir, $moduleDir, $fileName, $data);
+				$pattern[$res[0][$k]] = zConComponentCompiler::render($appid, $module, $business, $data);
 			}
 			else{
-				$newTag = '<component' . preg_replace('/(id=")(.*?)(")/i', '\\1'.$appDir.'.'.$fileName.'\\3', $v) . '>';
-				$pattern[$res[0][$k]] = $newTag . zConComponentCompiler::render($appDir, $moduleDir, $fileName, $data) . '</component>';
+				$newTag = '<component' . preg_replace('/(id=")(.*?)(")/i', '\\1'.$appid.'.'.$business.'\\3', $v) . '>';
+				$pattern[$res[0][$k]] = $newTag . zConComponentCompiler::render($appid, $module, $business, $data) . '</component>';
 			}
 			//取得ATTACH信息，判断是否需要引用css
 			preg_match('/attach="(.*?)"/i', $v, $attach);
-			self::attachHandle($attach[1] ?? '', $appDir, $moduleDir, $fileName);
+			self::attachHandle($attach[1] ?? '', $appid, $module, $business);
 		}
 		return strtr($content, $pattern);
 	}
@@ -64,48 +64,49 @@ class zConViewCompiler
 	/**
 	 * 附加资源处理器
 	 * @access private
-	 * @param  string  $attachStr       附加信息
-     * @param  string  $appName         应用名
-     * @param  string  $moduleName      模块名
-	 * @param  string  $businessName    业务名称
-	 * @param  bool    $isPage          是否为页面资源(false表示组件资源)
+	 * @param  string  $attachStr  附加信息
+     * @param  string  $appid      应用名
+     * @param  string  $module     模块名
+	 * @param  string  $business   业务名称
+	 * @param  bool    $isPage     是否为页面资源(false表示组件资源)
 	 */
-	private static function attachHandle($attachStr, $appName, $moduleName, $businessName, $isPage = false){
+	private static function attachHandle($attachStr, $appid, $module, $business, $isPage = false){
 		//包含样式
 	    if(preg_match('/all|css/i', $attachStr)){
-	        self::$tags .= zCoreConfig::getResourceTag($appName, $moduleName, $businessName, 0, $isPage) . PHP_EOL;
+	        self::$tags .= self::getResourceTag($appid, $module, $business, 0, $isPage) . PHP_EOL;
 	    }
 	    //包含脚本
 	    if(preg_match('/all|js/i', $attachStr)){
-	        self::$tags .= zCoreConfig::getResourceTag($appName, $moduleName, $businessName, 1, $isPage) . PHP_EOL;
+	        self::$tags .= self::getResourceTag($appid, $module, $business, 1, $isPage) . PHP_EOL;
 	    }
 	}
 	
 	/**
 	 * 渲染视图模板
 	 * @access public
-	 * @param  array   $data        要导入的数据
-     * @param  string  $viewName    视图名
-     * @param  string  $moduleName  模块名
-     * @param  string  $appName     应用名
+	 * @param  array   $data      要导入的数据
+     * @param  string  $business  视图名
+     * @param  string  $module    模块名
+     * @param  string  $appid     应用名
 	 * @return string
 	 */
-	public static function render($data = '', $viewName = '', $moduleName = '', $appName = ''){
-        $appName = $appName ?: APP_DIR;
-        $moduleName = $moduleName ?: APP_MODULE;
-        $businessName = $viewName ?: APP_BUSINESS;
-		$tplPath = zCoreConfig::getViewPath($appName, $moduleName, $businessName);
-		$cplPath = zCoreConfig::getViewPath($appName, $moduleName, $businessName, true, true);
+	public static function render($data = '', $business = '', $module = '', $appid = ''){
+        $appid = $appid ?: zCoreRequest::appid();
+        $module = $module ?: zCoreRequest::module();
+        $business = $business ?: zCoreRequest::business();
+		$tplPath = self::getViewPath($appid, $module, $business);
+		$cplPath = self::getViewPath($appid, $module, $business, true, true);
 		if(!zCoreConfig::$options['compile_enable'] || !is_file($cplPath)){
 			//模版不存在，抛出异常
 			if(!is_file($tplPath)){
+			    echo $tplPath;exit;
 				trigger_error(T_TEMPLATE_NOT_EXIST, E_USER_ERROR);
 			}
 			$content = zCoreMethod::read($tplPath) ?: '';
 			if($content){
 				//匹配META标签，判断是否需要添加页面样式
 				preg_match('/<meta attach="(.*?)">/i', $content, $attach);
-				self::attachHandle($attach[1] ?? '', $appName, $moduleName, $businessName, true);
+				self::attachHandle($attach[1] ?? '', $appid, $module, $business, true);
 				//编译模板内容
 				$content = self::compile(self::parseComponent($content));
 				if(self::$tags){
@@ -128,22 +129,28 @@ class zConViewCompiler
 			return zCoreMethod::read($cplPath);
 		}
 	}
-	
-	/**
-	 * 获取视图内容
-	 * @access public
-	 * @return string
-	 */
-	public static function getViewContent(){
-		$filePath = zCoreConfig::getViewPath(APP_DIR,APP_MODULE,APP_BUSINESS);
-		if(!is_file($filePath)){
-			trigger_error(T_TEMPLATE_NOT_EXIST, E_USER_ERROR);
-		}
-		$content = zCoreMethod::read($filePath) ?: '';
-		//仅检查有没有组件模版语法(此时必然没有变量的模版语法)
-		if(preg_match('/<component(.*?)><\/component>/i', $content)){
-			$content = self::render();
-		}
-		return $content;
-	}
+
+    /**
+     * 获取静态资源标签
+     * @access private
+     * @param  string  $appid     应用名
+     * @param  string  $module    模块名
+     * @param  string  $business  业务名
+     * @param  int     $type      资源类型(0样式，1脚本)
+     * @param  bool    $isPage    是否为页面资源
+     * @return string
+     */
+    private static function getResourceTag($appid, $module, $business, $type, $isPage){
+        $tag = [
+            '<link rel="stylesheet" type="text/css" href="%s">',//样式标签
+            '<script type="text/javascript" src="%s"></script>'//脚本标签
+        ];
+        //TODO '?v='.time();//版本号根据具体需求调整，当前写法与浏览器缓存时间一致
+        $url  = '/' . APP_RESOURCE_DIR . '/' . $appid . '/';
+        $url .= $isPage ? 'page' : 'component';
+        $url .= '/' . $module . '/' . $business . '/';
+        $url .= $type ? 'script.js' : 'style.css';
+        file_put_contents("./1.txt", sprintf($tag[$type], $url).PHP_EOL, FILE_APPEND);
+        return sprintf($tag[$type], $url);
+    }
 }

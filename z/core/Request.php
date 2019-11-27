@@ -324,6 +324,15 @@ class zCoreRequest
 	public static function url(){
 		return self::domain(true) . self::server('REQUEST_URI');
 	}
+
+    /**
+     * 获取当前请求的应用名
+     * @access public
+     * @return string
+     */
+    public static function appid(){
+        return APP_ID;
+    }
 	
 	/**
 	 * 获取当前请求的模块名
@@ -331,7 +340,7 @@ class zCoreRequest
 	 * @return string
 	 */
 	public static function module(){
-		return APP_DIR;
+		return APP_MODULE;
 	}
 	
 	/**

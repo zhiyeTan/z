@@ -3,7 +3,7 @@
 class appBizListBusiness extends appPubDataController
 {
 	protected function main(){
-		//从目录里面拿到appname与business的映射
+		//从目录里面拿到appid与business的映射
 		$tree = $this->listDirTree(dirname(APP_PATH), ['common', 'const', 'plugins', 'public', 'README.txt']);
 		$bizMap = [];
 		foreach($tree as $appItem){

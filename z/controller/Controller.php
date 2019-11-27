@@ -19,8 +19,9 @@ trait zConController
 	
 	public $data = [];//数据栈
 	
-	protected $errno = 0;
-	protected $message = '';
+	protected $errno = 0;//错误代码
+	protected $message = '';//错误信息
+	protected $view_error = '';//异常视图模版
 	
 	protected $useCache = true;//是否使用缓存
 	private $cacheName;//缓存名
@@ -35,7 +36,7 @@ trait zConController
 		$this->checkRequest('post');
 		$param = zCoreRequest::get();
 		ksort($param);//统一排序，确保缓存的唯一性
-		$this->cacheName = APP_DIR . '-' . APP_BUSINESS . '-' . md5(http_build_query($param));
+		$this->cacheName = APP_ID . '-' . APP_MODULE . '-' . APP_BUSINESS . '-' . md5(http_build_query($param));
 		$this->cache = zModCache::getAppDataCache($this->cacheName);
 	}
 
