@@ -16,10 +16,31 @@ class zConViewController extends zCoreBase
 	 * 构建函数
 	 * @access public
 	 */
-	public function __construct(){
+	public function __construct($requestParam = null){
 		self::setMountMap('mountControllerMap');
-		$this->init();
+		$this->init($requestParam);
 	}
+
+    /**
+     * 返回主方法执行后的数据
+     * @access public
+     * @return array
+     */
+    public function returnData(){
+        //如果有模拟请求参数，使用此参数替换请求参数后再执行对应业务逻辑，随后还原参数
+        if($this->simulateRequestParam){
+            $originalRequestParam = zCoreRequest::get();
+            zCoreRequest::get(null);
+            zCoreRequest::get($this->simulateRequestParam);
+            $this->main();
+            zCoreRequest::get(null);
+            zCoreRequest::get($originalRequestParam);
+        }
+        else{
+            $this->main();
+        }
+        return $this->data;
+    }
 	
 	/**
 	 * 显示视图
@@ -29,7 +50,7 @@ class zConViewController extends zCoreBase
 		$content = $this->cache;
 		if(!$content){
 			$this->main();
-			$view_business = $this->errno ? $this->errViewName : $this->view_business;
+			$view_business = $this->errno ? $this->view_error : $this->view_business;
 			$content = zConViewcompiler::render($this->data, $view_business, $this->view_module, $this->view_appid);
 			//修正静态资源的路径（不包括站外资源引用）
 			$content = zCoreRouter::redirectStaticResources($content);
@@ -38,6 +59,5 @@ class zConViewController extends zCoreBase
 			}
 		}
 		zCoreResponse::setContent($content)::send();
-		$this->delay();
 	}
 }

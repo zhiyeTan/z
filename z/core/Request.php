@@ -46,6 +46,7 @@ class zCoreRequest
 	 * @return mixed
 	 */
 	private static function info($type, $mixed){
+	    //表示删除或修改键值(仅支持get、post、files、cookie、session)
 		if(!empty($mixed) && is_array($mixed)){
 			if($type == 'cookie'){
 				$expire = time() + zCoreConfig::$options['cookie_expire'];
@@ -93,6 +94,21 @@ class zCoreRequest
 			}
 			return true;
 		}
+		//表示清空整个变量(仅支持get、post、files)
+		if($mixed === null){
+            switch($type) {
+                case 'get':
+                    $_GET = [];
+                    break;
+                case 'post':
+                    $_POST = [];
+                    break;
+                case 'files':
+                    $_FILES = [];
+                    break;
+            }
+            return true;
+        }
 		//cookie需要特别处理一下
 		if($type == 'cookie'){
 			$value = $_COOKIE[$mixed] ?? null;
@@ -165,23 +181,23 @@ class zCoreRequest
 	}
 	
 	/**
-	 * 获取或修改$_REQUEST参数
+	 * 获取$_REQUEST参数
 	 * @access public
-	 * @param  string  $mixed  指定键名
+	 * @param  string  $key  指定键名
 	 * @return mixed
 	 */
-	public static function request($mixed = ''){
-		return self::info('request', $mixed);
+	public static function request($key = ''){
+		return self::info('request', $key);
 	}
 
 	/**
-	 * 获取或修改$_SERVER参数
+	 * 获取$_SERVER参数
 	 * @access public
-	 * @param  string  $mixed  指定键名
+	 * @param  string  $key  指定键名
 	 * @return mixed
 	 */
-	public static function server($mixed = ''){
-		return self::info('server', $mixed);
+	public static function server($key = ''){
+		return self::info('server', $key);
 	}
 
 	/**
@@ -227,17 +243,17 @@ class zCoreRequest
 	/**
 	 * 获取header参数
 	 * @access public
-	 * @param  string  $mixed  指定键名
+	 * @param  string  $key  指定键名
 	 * @return mixed
 	 */
-	public static function headers($mixed = ''){
-		return self::info('headers', $mixed);
+	public static function headers($key = ''){
+		return self::info('headers', $key);
 	}
 	
 	/**
 	 * 获取请求参数
 	 * @access public
-	 * @param  $key  string  指定键名(如cookie.key, server.key)
+	 * @param  string  $key  指定键名(如cookie.key, server.key)
 	 * @return mixed
 	 */
 	public static function param($key){

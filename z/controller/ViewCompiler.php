@@ -16,7 +16,7 @@ class zConViewCompiler
 	 * eg. <component id="public.header" api="/public/header" attach="all" keep="1"></component>
 	 * eg. <component id="silber" api="/admin/navlist" attach="js" keep="0"></component>
 	 * api允许省略，相当于不加载数据
-	 * attach允许省略，相当于没有js,css附加文件
+	 * attach允许省略，相当于只引用html文件
 	 * keep允许省略，相当于不保留组件标签
 	 * @access private
 	 * @param  sting  $content  内容
@@ -42,21 +42,27 @@ class zConViewCompiler
                     $business = $tmp[1];
                 }
 			}
-			//取得API信息，通过接口地址获取数据，允许为空
-			preg_match('/api="(.*?)"/i', $v, $api);
-			$data = empty($api[1]) ? '' : zCoreMethod::curl($api[1]);
-			//取得KEEP信息，判断是否保留component标签
-			preg_match('/keep="(.*?)"/i', $v, $keep);
-			if(empty($keep[1])){
-				$pattern[$res[0][$k]] = zConComponentCompiler::render($appid, $module, $business, $data);
-			}
-			else{
-				$newTag = '<component' . preg_replace('/(id=")(.*?)(")/i', '\\1'.$appid.'.'.$business.'\\3', $v) . '>';
-				$pattern[$res[0][$k]] = $newTag . zConComponentCompiler::render($appid, $module, $business, $data) . '</component>';
-			}
-			//取得ATTACH信息，判断是否需要引用css
-			preg_match('/attach="(.*?)"/i', $v, $attach);
-			self::attachHandle($attach[1] ?? '', $appid, $module, $business);
+            //取得ATTACH信息
+            preg_match('/attach="(.*?)"/i', $v, $attach);
+            $attach = $attach[1] ?? 'html';
+            //处理下是否要加上js和css
+            self::attachHandle($attach, $appid, $module, $business);
+			//判断是否包含html
+            $pattern[$res[0][$k]] = '';
+            if(preg_match('/all|html/i', $attach)){
+                //取得API信息，通过接口地址获取数据，允许为空
+                preg_match('/api="(.*?)"/i', $v, $api);
+                $data = empty($api[1]) ? '' : zCoreMethod::curl($api[1]);
+                //取得KEEP信息，判断是否保留component标签
+                preg_match('/keep="(.*?)"/i', $v, $keep);
+                if(empty($keep[1])){
+                    $pattern[$res[0][$k]] = zConComponentCompiler::render($appid, $module, $business, $data);
+                }
+                else{
+                    $newTag = '<component' . preg_replace('/(id=")(.*?)(")/i', '\\1'.$appid.'.'.$business.'\\3', $v) . '>';
+                    $pattern[$res[0][$k]] = $newTag . zConComponentCompiler::render($appid, $module, $business, $data) . '</component>';
+                }
+            }
 		}
 		return strtr($content, $pattern);
 	}

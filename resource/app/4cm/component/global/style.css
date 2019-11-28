@@ -1,0 +1,43 @@
+﻿/*主体框架部分样式begin*/
+html{
+	font-size: 13px;
+}
+body{
+	background: #f3f6f8;
+}
+#container{
+	position: absolute;
+	box-sizing: border-box;
+	padding: 20px;
+	top: 0;
+	left: 240px;
+	right: 0;
+	bottom: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+.container-row{
+	padding: 15px;
+	background: white;
+	border-radius: 4px;
+	margin-bottom: 20px;
+}
+.form-inline select, .form-inline button, .form-inline input, .form-inline label{
+	margin: 4px 4px 0 0;
+}
+@media only screen and (max-width: 640px) {
+	#container {
+		position: static;
+		left: 0;
+		padding: 10px;
+	}
+	.container-row{
+		padding: 10px;
+	}
+}
+#pagination{
+	margin-top: 15px;
+}
+/*主体框架部分样式end*/
+
+

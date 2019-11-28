@@ -125,9 +125,7 @@ class zCoreRouter
                 }
 			}
 		}
-        $arrRequest['a'] = $arrRequest['a'] ?? 'default';
-        $arrRequest['m'] = $arrRequest['m'] ?? '';
-        $arrRequest['b'] = $arrRequest['b'] ?? 'index';
+		self::complementBasicParam($arrRequest);
 		zCoreRequest::get($arrRequest);
 		$domainMap = zCoreConfig::getDomainMap();
 		//判断是否允许访问当前应用/模块
@@ -139,6 +137,19 @@ class zCoreRouter
         define('APP_MODULE', $arrRequest['m']);
 		define('APP_BUSINESS', $arrRequest['b']);
 	}
+
+    /**
+     * 补全基本的参数
+     * @access public
+     * @param  array  $requestParam  请求参数
+     * @return array
+     */
+    public static function complementBasicParam(&$requestParam){
+        $requestParam['a'] = $requestParam['a'] ?? 'default';
+        $requestParam['m'] = $requestParam['m'] ?? '';
+        $requestParam['b'] = $requestParam['b'] ?? 'index';
+        return $requestParam;
+    }
 	
 	/**
 	 * 重定向静态资源

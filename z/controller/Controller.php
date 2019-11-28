@@ -26,17 +26,26 @@ trait zConController
 	protected $useCache = true;//是否使用缓存
 	private $cacheName;//缓存名
 	public $cache;//缓存
-	
+
+    protected $simulateRequestParam = null;//模拟的请求参数，如果有，那么returnData方法将使用此参数暂时替换实际请求参数
+
 	/**
 	 * 公共的初始化方法
 	 * @access private
+     * @param  array  $requestParam  默认获取当前URL传递的参数，如果传递了数组，那么根据数组参数进行初始化
 	 */
-	private function init(){
-		$this->checkRequest('get');
-		$this->checkRequest('post');
-		$param = zCoreRequest::get();
-		ksort($param);//统一排序，确保缓存的唯一性
-		$this->cacheName = APP_ID . '-' . APP_MODULE . '-' . APP_BUSINESS . '-' . md5(http_build_query($param));
+	private function init($requestParam = null){
+	    if(is_array($requestParam)){
+            zCoreRouter::complementBasicParam($requestParam);
+            $this->simulateRequestParam = $requestParam;
+        }
+	    else{
+            $this->checkRequest('get');
+            $this->checkRequest('post');
+            $requestParam = zCoreRequest::get();
+        }
+		ksort($requestParam);//统一排序，确保缓存的唯一性
+		$this->cacheName = $requestParam['a'] . '-' . $requestParam['m'] . '-' . $requestParam['b'] . '-' . md5(http_build_query($requestParam));
 		$this->cache = zModCache::getAppDataCache($this->cacheName);
 	}
 
@@ -117,9 +126,4 @@ trait zConController
 	 * 主方法(相应相关的业务逻辑都应该放在这个方法下)
 	 */
 	protected function main(){}
-	
-	/**
-	 * 延迟执行的方法(非相应相关的业务逻辑都应该放在这个方法下)
-	 */
-	protected function delay(){}
 }

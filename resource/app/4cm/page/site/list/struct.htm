@@ -7,12 +7,35 @@
 		<meta name="Keywords" content="{{keywords}}"/>
 		<meta name="Description" content="{{description}}"/>
 		<component id="meta"></component>
+		<component id="global" attach="css"></component>
 	</head>
 	<body>
 		<component id="sidebar" attach="all"></component>
 		<div id="container">
 			<div class="container-row">
-				<button type="button" class="btn btn-success">新增站点</button>
+				<button id="addSite" type="button" class="btn btn-success">新增站点</button>
+			</div>
+			<div id="siteForm" class="container-row">
+				<div class="site-form-row">
+					<label>名称：</label>
+					<input class="form-control" id="sitename" />
+				</div>
+				<div class="site-form-row">
+					<label>标题：</label>
+					<input class="form-control" id="title" />
+				</div>
+				<div class="site-form-row">
+					<label>关键词：</label>
+					<input class="form-control" id="keywords" />
+				</div>
+				<div class="site-form-row">
+					<label>描述：</label>
+					<input class="form-control" id="description" />
+				</div>
+				<div class="site-form-row">
+					<button id="siteSubmit" class="btn btn-success">提交</button>
+					<button id="siteCancel" class="btn btn-default">关闭</button>
+				</div>
 			</div>
 			<div class="container-row form-inline">
 				<select class="form-control">
@@ -57,8 +80,9 @@
 				<div id="pagination"></div>
 			</div>
 		</div>
-		<component id="footer" attach="js"></component>
-		<component id="dialog" attach="js"></component>
+		<component id="backdrop" attach="all"></component>
+		<component id="dialog" attach="html&js"></component>
+		<component id="pagination" attach="js"></component>
 	</body>
 </html>
 

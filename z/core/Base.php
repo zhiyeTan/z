@@ -16,7 +16,11 @@ class zCoreBase
 	 * @param  string  $mountMapName  映射文件名
 	 */
 	protected static function setMountMap($mountMapName){
-		self::$mountMap = zCoreConfig::loadConfig($mountMapName);
+	    static $mounted;
+	    if(!$mounted){
+            $mounted = 1;
+            self::$mountMap = zCoreConfig::loadConfig($mountMapName);
+        }
 	}
 	
 	/**
