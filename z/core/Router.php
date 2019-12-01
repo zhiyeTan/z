@@ -128,6 +128,10 @@ class zCoreRouter
 		self::complementBasicParam($arrRequest);
 		zCoreRequest::get($arrRequest);
 		$domainMap = zCoreConfig::getDomainMap();
+		//如果是默认应用，根据域名映射取得对应的应用ID(应用目录)
+		if($arrRequest['a'] == 'default' && !empty($domainMap)){
+		    $arrRequest['a'] = $domainMap[0];
+        }
 		//判断是否允许访问当前应用/模块
 		if(!empty($domainMap) && !in_array($arrRequest['a'], $domainMap)){
 			trigger_error(T_NO_PERMISSION_MODULE, E_USER_ERROR);

@@ -38,6 +38,18 @@ body{
 #pagination{
 	margin-top: 15px;
 }
+.form-row{
+    margin-bottom: 1em;
+}
+.form-multiselect-row{
+	width: 100%;
+}
+.form-multiselect-row *{
+	vertical-align: middle;
+}
+.form-multiselect-row label {
+	padding-right: 12px;
+}
 /*主体框架部分样式end*/
 
 
