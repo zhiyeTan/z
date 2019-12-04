@@ -1,7 +1,7 @@
 /**
  * 遮挡层组件
  */
-var Backdrop = {
+const Backdrop = {
 	/**
 	 * 显示加载中提示
 	 */

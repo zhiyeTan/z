@@ -38,6 +38,18 @@ body{
 #pagination{
 	margin-top: 15px;
 }
+#pagination ul{
+	margin: 0;
+	padding: 0;
+}
+.page-item{
+	float: left;
+	list-style: none;
+}
+.page-item .page-link{
+	display: inline-block;
+}
+
 .form-row{
     margin-bottom: 1em;
 }

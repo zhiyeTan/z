@@ -14,39 +14,17 @@
 		<div id="container">
 			<div class="container-row">
 				<button id="addSite" type="button" class="btn btn-success">新增站点</button>
-			</div>
-			<div id="siteForm" class="container-row">
-				<div class="site-form-row">
-					<label>名称：</label>
-					<input class="form-control" id="sitename" />
-				</div>
-				<div class="site-form-row">
-					<label>标题：</label>
-					<input class="form-control" id="title" />
-				</div>
-				<div class="site-form-row">
-					<label>关键词：</label>
-					<input class="form-control" id="keywords" />
-				</div>
-				<div class="site-form-row">
-					<label>描述：</label>
-					<input class="form-control" id="description" />
-				</div>
-				<div class="site-form-row">
-					<button id="siteSubmit" class="btn btn-success">提交</button>
-					<button id="siteCancel" class="btn btn-default">关闭</button>
+				<div class="input-append date formdatetimer">
+					<input size="20" type="text" value="" readonly>
+					<span class="add-on"><i class="icon-remove"></i></span>
+					<span class="add-on"><i class="icon-calendar"></i></span>
 				</div>
 			</div>
-			<div class="container-row form-inline">
-				<select class="form-control">
-					<option value="1">站点名</option>
-				</select>
-				<input type="text" id="keyword" class="form-control" />
-				<button type="button" class="btn btn-primary">搜索</button>
-			</div>
+			<div id="siteForm" class="container-row"></div>
+			<div id="siteList" class="container-row"></div>
 			<div class="container-row">
 				<div class="table-responsive">
-					<table class="table">
+					<table class="table table-striped">
 						<thead>
 							<tr>
 								<th>名称</th>
@@ -83,6 +61,8 @@
 		<component id="backdrop" attach="all"></component>
 		<component id="dialog" attach="html&js"></component>
 		<component id="pagination" attach="js"></component>
+		<component id="form" attach="js"></component>
+		<component id="filter" attach="js"></component>
 	</body>
 </html>
 

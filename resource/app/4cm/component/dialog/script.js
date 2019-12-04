@@ -1,4 +1,4 @@
-var Dialog = {
+const Dialog = {
 	/**
 	 * @param {Object} args 样式参数
 	 * {
