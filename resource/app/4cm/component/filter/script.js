@@ -2,9 +2,9 @@
  * 基于bootstrap4的筛选器组件
  */
 const Filter = {
+	id: '',//筛选器ID
 	apiUrl: '',//数据接口
-	filterSelector: '',//筛选器选择器
-	filterElements:{//过滤器表单元素(键名和表单元素ID一一对应)
+	elements: {//过滤器表单元素(键名和表单元素ID一一对应)
 		// elementName: {
 		//     title: '',//表单元素的标题
 		//     type: 'text',//表单类型[select/text/timer/button]
@@ -17,7 +17,19 @@ const Filter = {
 		//     tips: '',//校验不通过时的提示信息
 		//     className: '',//样式名(仅button类型可用)
 		//	   click: '',//点击事件(仅button类型可用)
+		//     format: '',//时间格式(仅timer类型可用)
 		// },
+	},
+	baseTimerParam: {//基本的时间选择器参数(基本不需要改变)
+		language:  'zh-CN',
+		weekStart: 1,
+		todayBtn:  1,
+		todayHighlight: 1,
+		autoclose: 1,
+		maxView: 4,
+		startView: 2,
+		// format: 'yyyy-mm-dd',
+		// minView: 1,
 	},
 	/**
 	 * 初始化表单对象
@@ -25,25 +37,26 @@ const Filter = {
 	init: function(param){
 		let self = this;
 		this.apiUrl = param.apiUrl;
-		this.filterSelector = param.filterSelector;
-		if(param.filterElements){
-			Object.keys(param.filterElements).forEach(function(key){
-				self.filterElements[key] = {
-					title: param.filterElements[key].hasOwnProperty('title') ? param.filterElements[key].title : '',
-					type: param.filterElements[key].hasOwnProperty('type') ? param.filterElements[key].type : 'text',
-					placeholder: param.filterElements[key].hasOwnProperty('placeholder') ? param.filterElements[key].placeholder : '',
-					options: param.filterElements[key].hasOwnProperty('options') ? param.filterElements[key].options : [],
-					value: param.filterElements[key].hasOwnProperty('value') ? param.filterElements[key].value : '',
-					regex: param.filterElements[key].hasOwnProperty('regex') ? param.filterElements[key].regex : '',
-					tips: param.filterElements[key].hasOwnProperty('tips') ? param.filterElements[key].tips : '',
-					className: param.filterElements[key].hasOwnProperty('className') ? param.filterElements[key].className : '',
-					click: param.filterElements[key].hasOwnProperty('click') ? param.filterElements[key].click : '',
+		this.id = param.id;
+		if(param.elements){
+			Object.keys(param.elements).forEach(function(key){
+				self.elements[key] = {
+					title: param.elements[key].hasOwnProperty('title') ? param.elements[key].title : '',
+					type: param.elements[key].hasOwnProperty('type') ? param.elements[key].type : 'text',
+					placeholder: param.elements[key].hasOwnProperty('placeholder') ? param.elements[key].placeholder : '',
+					options: param.elements[key].hasOwnProperty('options') ? param.elements[key].options : [],
+					value: param.elements[key].hasOwnProperty('value') ? param.elements[key].value : '',
+					regex: param.elements[key].hasOwnProperty('regex') ? param.elements[key].regex : '',
+					tips: param.elements[key].hasOwnProperty('tips') ? param.elements[key].tips : '',
+					className: param.elements[key].hasOwnProperty('className') ? param.elements[key].className : '',
+					click: param.elements[key].hasOwnProperty('click') ? param.elements[key].click : '',
+					format: param.elements[key].hasOwnProperty('format') ? param.elements[key].format : '',
 				}
 			});
 		}
 		//自动加一个搜索按钮进去
 		this.searchBtnName = 'searchBtn';
-		this.filterElements[this.searchBtnName] = {
+		this.elements[this.searchBtnName] = {
 			title: '',
 			type: 'button',
 			placeholder: '',
@@ -54,20 +67,20 @@ const Filter = {
 			className: 'btn-primary',
 			click: this.search
 		}
-		this.createFilter();
+		this.create();
 	},
 	/**
 	 * 创建过滤器
 	 */
-	createFilter: function(){
+	create: function(){
 		let self = this;
-		$(this.filterSelector).html('');
-		if(!$(this.filterSelector).hasClass('form-inline')){
-			$(this.filterSelector).addClass('form-inline');
+		$('#'+this.id).html('');
+		if(!$('#'+this.id).hasClass('form-inline')){
+			$('#'+this.id).addClass('form-inline');
 		}
 		//表单元素
-		Object.keys(this.filterElements).forEach(function(key){
-			let info = self.filterElements[key];
+		Object.keys(this.elements).forEach(function(key){
+			let info = self.elements[key];
 			let groupObj = document.createElement('div');
 			groupObj.className = 'form-group';
 			if(info.title){
@@ -90,12 +103,17 @@ const Filter = {
 				});
 				groupObj.append(eleObj);
 			}
-			else if(info.type == 'text'){
+			//文本框和时间选择器都用input
+			else if(['text','timer'].indexOf(info.type) >= 0){
 				let eleObj = document.createElement('input');
+				eleObj.name = key;
 				eleObj.type = 'text';
 				eleObj.className = 'form-control';
 				eleObj.value = info.value;
 				eleObj.placeholder = info.placeholder;
+				if(info.type == 'timer'){
+					eleObj.readOnly = true;
+				}
 				groupObj.append(eleObj);
 			}
 			else if(info.type == 'button'){
@@ -106,7 +124,7 @@ const Filter = {
 				groupObj.append(eleObj);
 				//绑定点击事件
 				if(info.click){
-					$(self.filterSelector).on('click', '[name='+key+']', function(){
+					$('#'+self.id).on('click', '[name='+key+']', function(){
 						if(key == self.searchBtnName){
 							self.search();
 						}
@@ -116,21 +134,27 @@ const Filter = {
 					});
 				}
 			}
-			else if(info.type == 'timer'){
-
-			}
-			$(self.filterSelector).append(groupObj);
+			$('#'+self.id).append(groupObj);
 			//绑定表单change事件
-			$(self.filterSelector).on('change', '[name='+key+']', function(){
-				self.filterElements[key].value = $(this).val();
+			$('#'+self.id).on('change', '[name='+key+']', function(){
+				self.elements[key].value = $(this).val();
 			});
+			//时间选择器要绑一下控件
+			if(info.type == 'timer'){
+				self.baseTimerParam.minView = 2;
+				self.baseTimerParam.format = info.format ? info.format : 'yyyy-mm-dd';
+				if(/h/i.test(self.baseTimerParam.format)){
+					self.baseTimerParam.minView = 1;
+				}
+				$('[name='+key+']').datetimepicker(self.baseTimerParam);
+			}
 		});
 	},
 	search: function(){
 		let self = this;
 		let formData = {};
-		Object.keys(this.filterElements).forEach(function(key){
-			formData[key] = self.filterElements[key].value;
+		Object.keys(this.elements).forEach(function(key){
+			formData[key] = self.elements[key].value;
 		})
 		console.log(formData)
 	}
