@@ -6,7 +6,7 @@ const Filter = {
 	apiUrl: '',//数据接口
 	elements: {//过滤器表单元素(键名和表单元素ID一一对应)
 		// elementName: {
-		//     title: '',//表单元素的标题
+		//     name: '',//表单元素的标题
 		//     type: 'text',//表单类型[select/text/timer/button]
 		//     placeholder: '',//描述文字
 		//     options: {//选项(仅select类型用到)
@@ -41,7 +41,7 @@ const Filter = {
 		if(param.elements){
 			Object.keys(param.elements).forEach(function(key){
 				self.elements[key] = {
-					title: param.elements[key].hasOwnProperty('title') ? param.elements[key].title : '',
+					name: param.elements[key].hasOwnProperty('name') ? param.elements[key].name : '',
 					type: param.elements[key].hasOwnProperty('type') ? param.elements[key].type : 'text',
 					placeholder: param.elements[key].hasOwnProperty('placeholder') ? param.elements[key].placeholder : '',
 					options: param.elements[key].hasOwnProperty('options') ? param.elements[key].options : [],
@@ -57,7 +57,7 @@ const Filter = {
 		//自动加一个搜索按钮进去
 		this.searchBtnName = 'searchBtn';
 		this.elements[this.searchBtnName] = {
-			title: '',
+			name: '',
 			type: 'button',
 			placeholder: '',
 			options: [],
@@ -81,13 +81,13 @@ const Filter = {
 		//表单元素
 		Object.keys(this.elements).forEach(function(key){
 			let info = self.elements[key];
+			if(info.name){
+				let label = document.createElement('label');
+				label.innerHTML = info.name;
+				$('#'+self.id).append(label);
+			}
 			let groupObj = document.createElement('div');
 			groupObj.className = 'form-group';
-			if(info.title){
-				let label = document.createElement('label');
-				label.innerHTML = info.title;
-				groupObj.append(label);
-			}
 			if(info.type == 'select'){//下拉框
 				let eleObj = document.createElement('select');
 				eleObj.name = key;

@@ -156,7 +156,6 @@ class zConViewCompiler
         $url .= $isPage ? 'page' : 'component';
         $url .= '/' . $module . '/' . $business . '/';
         $url .= $type ? 'script.js' : 'style.css';
-        file_put_contents("./1.txt", sprintf($tag[$type], $url).PHP_EOL, FILE_APPEND);
         return sprintf($tag[$type], $url);
     }
 }

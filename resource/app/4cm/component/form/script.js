@@ -7,7 +7,7 @@ const Form = {
 	apiUrl: '',//保存数据接口
 	elements:{//表单元素(键名和表单元素ID一一对应)
 		// elementName: {
-		//     title: '',//表单元素的标题
+		//     name: '',//表单元素的名字
 		//     type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/files]
 		//     placeholder: '',//描述文字
 		//     options: {//选项(仅select/radio/checkbox类型用到)
@@ -19,6 +19,7 @@ const Form = {
 		//     regex: '',//检验值的正则表达式(空表示不校验)
 		//     tips: '',//校验不通过时的提示信息
 		//     format: '',//时间格式(仅timer类型用到)
+		//     column: 0,//所占列数(一行12列)
 		// },
 	},
 	baseTimerParam: {//基本的时间选择器参数(基本不需要改变)
@@ -42,7 +43,7 @@ const Form = {
 		if(param.elements){
 			Object.keys(param.elements).forEach(function(key){
 				self.elements[key] = {
-					title: param.elements[key].hasOwnProperty('title') ? param.elements[key].title : '',
+					name: param.elements[key].hasOwnProperty('name') ? param.elements[key].name : '',
 					type: param.elements[key].hasOwnProperty('type') ? param.elements[key].type : 'text',
 					placeholder: param.elements[key].hasOwnProperty('placeholder') ? param.elements[key].placeholder : '',
 					options: param.elements[key].hasOwnProperty('options') ? param.elements[key].options : [],
@@ -52,6 +53,7 @@ const Form = {
 					regex: param.elements[key].hasOwnProperty('regex') ? param.elements[key].regex : '',
 					tips: param.elements[key].hasOwnProperty('tips') ? param.elements[key].tips : '',
 					format: param.elements[key].hasOwnProperty('format') ? param.elements[key].format : '',
+					column: param.elements[key].hasOwnProperty('column') ? param.elements[key].column : 0,
 				}
 				//多选项的值和默认值自动转换为数组
 				if(self.elements[key].type == 'checkbox' && !Array.isArray(self.elements[key].default)){
@@ -68,19 +70,33 @@ const Form = {
 		this.create();
 	},
 	/**
+	 * 创建行元素
+	 */
+	createRowElement: function(){
+		let obj = document.createElement('div');
+		obj.className = 'row';
+		return obj;
+	},
+	/**
 	 * 创建表单
 	 */
 	create: function(){
 		let self = this;
 		$('#'+this.id).html('');
 		//表单元素
-		Object.keys(this.elements).forEach(function(key){
+		let eleKeys = Object.keys(this.elements);
+		let lastEleKey = eleKeys[eleKeys.length - 1];//最后一个元素的key
+		let colNumOnRow = 0;//一行的列数
+		let rowBox = this.createRowElement();
+		eleKeys.forEach(function(key){
 			let info = self.elements[key];
-			let rowObj = document.createElement('div');
-			let titleObj = document.createElement('label');
-			rowObj.className = 'form-row';
-			titleObj.innerHTML = info.title;
-			rowObj.append(titleObj);
+			let colTitle = document.createElement('label');
+			colTitle.innerHTML = info.name;
+			let colBox = document.createElement('div');
+			let colNum = info.column > 0 ? info.column : 12;
+			colBox.className = 'col-sm-'+colNum;
+			colBox.append(colTitle);
+			let eleObj;
 			//input
 			if(['text','password','radio','checkbox','number','tel','timer'].indexOf(info.type) >= 0){
 				//具有多个选项
@@ -92,7 +108,7 @@ const Form = {
 						optKeys.forEach(function(optKey){
 							let label = document.createElement('label');
 							label.innerHTML = info.options[optKey];
-							let eleObj = document.createElement('input');
+							eleObj = document.createElement('input');
 							eleObj.type = info.type;
 							eleObj.name = key;
 							eleObj.value = optKey;
@@ -107,12 +123,12 @@ const Form = {
 							label.prepend(eleObj);
 							optBoxObj.append(label);
 						});
-						rowObj.append(optBoxObj);
+						colBox.append(optBoxObj);
 					}
 				}
 				//唯一表单元素
 				else{
-					let eleObj = document.createElement('input');
+					eleObj = document.createElement('input');
 					eleObj.type = info.type;
 					eleObj.name = key;
 					eleObj.value = info.default;
@@ -132,23 +148,23 @@ const Form = {
 						groupAppend.className = 'input-group-append';
 						groupAppend.append(groupText);
 						groupObj.append(groupAppend);
-						rowObj.append(groupObj);
+						colBox.append(groupObj);
 					}
 					else{
-						rowObj.append(eleObj);
+						colBox.append(eleObj);
 					}
 				}
 			}
 			else if(info.type == 'textarea'){
-				let eleObj = document.createElement('textarea');
+				eleObj = document.createElement('textarea');
 				eleObj.name = key;
 				eleObj.value = info.default;
 				eleObj.className = 'form-control';
 				eleObj.placeholder = info.placeholder;
-				rowObj.append(eleObj);
+				colBox.append(eleObj);
 			}
 			else if(info.type == 'select'){
-				let eleObj = document.createElement('select');
+				eleObj = document.createElement('select');
 				eleObj.name = key;
 				eleObj.className = 'form-control';
 				Object.keys(info.options).forEach(function(optKey){
@@ -160,11 +176,10 @@ const Form = {
 					}
 					eleObj.append(option);
 				})
-				rowObj.append(eleObj);
+				colBox.append(eleObj);
 			}
-			$('#'+self.id).append(rowObj);
 			//绑定表单change事件
-			$('#'+self.id).on('change', '[name='+key+']', function(){
+			$(colBox).on('change', '[name='+key+']', function(){
 				let val = $(this).val();
 				//多选项要单独处理
 				if($(this).attr('type') == 'checkbox'){
@@ -189,23 +204,43 @@ const Form = {
 				if(/h/i.test(self.baseTimerParam.format)){
 					self.baseTimerParam.minView = 1;
 				}
-				$('[name='+key+']').datetimepicker(self.baseTimerParam);
+				$(eleObj).datetimepicker(self.baseTimerParam);
+			}
+			colNumOnRow += colNum;
+			//一行只能放下12列
+			if(colNumOnRow <= 12){
+				rowBox.append(colBox);
+			}
+			//如果当前行已经放不下表单元素，先把行放到表单中
+			//最后一个表单元素要把行放到表单中
+			//再生成一个新的行对象，重置行内列数
+			if(colNumOnRow >= 12 || key == lastEleKey){
+				$('#'+self.id).append(rowBox);
+				rowBox = self.createRowElement();
+				if(colNumOnRow > 12){
+					rowBox.append(colBox);
+					colNumOnRow = colNum;
+				}
+				else{
+					colNumOnRow = 0;
+				}
 			}
 		});
 		//按钮组
-		let rowObj = document.createElement('div');
 		let submitBtn = document.createElement('button');
-		let cancelBtn = document.createElement('button');
-		rowObj.className = 'form-row';
 		submitBtn.className = 'btn btn-success';
 		submitBtn.id = this.id + '_btn_submit';
 		submitBtn.innerHTML = '提交';
-		rowObj.append(submitBtn);
+		let cancelBtn = document.createElement('button');
 		cancelBtn.className = 'btn btn-default';
 		cancelBtn.id = this.id + '_btn_submit';
 		cancelBtn.innerHTML = '取消';
-		rowObj.append(cancelBtn);
-		$('#'+self.id).append(rowObj);
+		let colBox = document.createElement('div');
+		colBox.className = 'col-12';
+		colBox.append(submitBtn);
+		colBox.append(cancelBtn);
+		rowBox.append(colBox);
+		$('#'+self.id).append(rowBox);
 		//绑定按钮click事件
 		$('#'+this.id).on('click', '#'+submitBtn.id+',#'+cancelBtn.id, function(){
 			if($(this).attr('id') == submitBtn.id){
@@ -228,14 +263,14 @@ const Form = {
 			//多选项单独处理
 			if(self.elements[key].type == 'checkbox'){
 				self.elements[key].value = [].concat(newVal);//要防止地址引用
-				$('input[name='+key+']').prop('checked', false);
+				$('#'+self.id+' [name='+key+']').prop('checked', false);
 				self.elements[key].value.forEach(function(val){
-					$('input[name='+key+'][value='+val+']').prop('checked', true);
+					$('#'+self.id+' [name='+key+'][value='+val+']').prop('checked', true);
 				});
 			}
 			else{
 				self.elements[key].value = newVal;
-				$('[name='+key+']').val(self.elements[key].value);
+				$('#'+self.id+' [name='+key+']').val(self.elements[key].value);
 			}
 		});
 	},

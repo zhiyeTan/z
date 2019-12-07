@@ -82,6 +82,7 @@
 	#sidebar {
 		position: static;
 		width: auto;
+		background: none;
 	}
 	#sideScrollBar{
 		display: none;

@@ -2,23 +2,23 @@
  * 基于bootstrap4的分页组件
  */
 const Pagination = {
-	selector: '',//选择器
+	id: '',//选择器
 	currentPage: 1,//当前页码
 	recordNum: 0,//总记录数
 	onPageNum: 1,//每页记录数
 	totalPage: 1,//总页数
 	pageSideNum: 2,//当前页码两侧的页码显示数量
 	init: function(param){
-		this.selector = param.selector;
+		this.id = param.id;
 		this.currentPage = param.currentPage > 1 ? param.currentPage : 1;
 		this.recordNum = param.recordNum > 0 ? param.recordNum : 0;
 		this.onPageNum = param.onPageNum > 1 ? param.onPageNum : 1;
 		this.pageSideNum = param.pageSideNum > 0 ? param.pageSideNum : 2;
 		this.totalPage = Math.ceil(this.recordNum / this.onPageNum);
-		if($(param.selector).length){
+		if($('#'+param.id).length){
 			let self = this;
 			this.render();
-			$(param.selector).on('click', 'a', function(e){
+			$('#'+param.id).on('click', 'a', function(e){
 				e.preventDefault();
 				if(self.currentPage != $(this).data('page')){
 					self.currentPage = $(this).data('page');
@@ -51,7 +51,7 @@ const Pagination = {
 		}
 		//html = this.compile(1, this.currentPage+'/'+this.totalPage+'('+this.recordNum+')', 'disabled') + html;
 		html = '<ul class="clearfix">' + html + '</ul>\n';
-		$(this.selector).html(html);
+		$('#'+this.id).html(html);
 	},
 	compile: function(page, pageText, className){
 		if(page < 1 || page > this.totalPage){

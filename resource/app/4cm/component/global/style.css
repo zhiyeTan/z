@@ -22,8 +22,15 @@ body{
 	border-radius: 4px;
 	margin-bottom: 20px;
 }
-.form-inline select, .form-inline button, .form-inline input, .form-inline label{
-	margin: 4px 4px 0 0;
+.container-row .row > *{
+	padding-bottom: .8rem;
+}
+.container-row.form-inline > *{
+	margin: 0;
+	padding: 0 4px 4px 0;
+}
+.container-row .table button{
+	margin: 0 2px 1px 0;
 }
 @media only screen and (max-width: 640px) {
 	#container {
@@ -48,10 +55,6 @@ body{
 }
 .page-item .page-link{
 	display: inline-block;
-}
-
-.form-row{
-    margin-bottom: 1em;
 }
 .form-multiselect-row{
 	width: 100%;
