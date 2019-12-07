@@ -8,7 +8,7 @@ const Form = {
 	elements:{//表单元素(键名和表单元素ID一一对应)
 		// elementName: {
 		//     name: '',//表单元素的名字
-		//     type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/files]
+		//     type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
 		//     placeholder: '',//描述文字
 		//     options: {//选项(仅select/radio/checkbox类型用到)
 		//         // value: text,//选项值与提示文字键值对
@@ -155,12 +155,16 @@ const Form = {
 					}
 				}
 			}
-			else if(info.type == 'textarea'){
+			//else if(info.type == 'textarea'){
+			else if(['textarea','html'].indexOf(info.type) >= 0){
 				eleObj = document.createElement('textarea');
 				eleObj.name = key;
 				eleObj.value = info.default;
 				eleObj.className = 'form-control';
 				eleObj.placeholder = info.placeholder;
+				if(info.type == 'html'){
+					eleObj.dataset.editor = 1;
+				}
 				colBox.append(eleObj);
 			}
 			else if(info.type == 'select'){
@@ -225,8 +229,12 @@ const Form = {
 					colNumOnRow = 0;
 				}
 			}
+			if(colNumOnRow >= 12 && key == lastEleKey){
+				$('#'+self.id).append(rowBox);
+			}
 		});
 		//按钮组
+		rowBox = self.createRowElement();
 		let submitBtn = document.createElement('button');
 		submitBtn.className = 'btn btn-success';
 		submitBtn.id = this.id + '_btn_submit';
@@ -250,6 +258,20 @@ const Form = {
 				self.hide();
 			}
 		});
+		//如果有富文本元素，进行初始化
+		//TODO 后面要改一下图片和视频插入按钮相关逻辑
+		$('#'+self.id).find('[data-editor=1]').each(function(){
+			let key = $(this).attr('name');
+			$(this).summernote({
+				lang: 'zh-CN',
+				height: 150,
+				callbacks: {
+					onChange: function(contents){
+						self.elements[key].value = contents;
+					}
+				}
+			});
+		});
 	},
 	/**
 	 * 设置表单数据
@@ -259,14 +281,19 @@ const Form = {
 		let self = this;
 		formData = formData ? formData : {};
 		Object.keys(this.elements).forEach(function(key){
+			let type = self.elements[key].type;
 			let newVal = formData.hasOwnProperty(key) ? formData[key] : self.elements[key].default;
-			//多选项单独处理
-			if(self.elements[key].type == 'checkbox'){
+			//多选项
+			if(type == 'checkbox'){
 				self.elements[key].value = [].concat(newVal);//要防止地址引用
 				$('#'+self.id+' [name='+key+']').prop('checked', false);
 				self.elements[key].value.forEach(function(val){
 					$('#'+self.id+' [name='+key+'][value='+val+']').prop('checked', true);
 				});
+			}
+			//富文本
+			else if(type == 'html'){
+				$('#'+self.id+' [name='+key+']').summernote('code', newVal);
 			}
 			else{
 				self.elements[key].value = newVal;
@@ -279,10 +306,8 @@ const Form = {
 	 * @param formData 表单数据
 	 */
 	show: function(formData){
-		if($('#'+this.id+':hidden').length){
-			this.setData(formData);
-			$('#'+this.id).show();
-		}
+		this.setData(formData);
+		$('#'+this.id).show();
 	},
 	hide: function(){
 		$('#'+this.id).hide();

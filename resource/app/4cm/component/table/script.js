@@ -100,5 +100,16 @@ const Table = {
 			tr.append(actTd);
 			$('#'+self.id).find('tbody').append(tr);
 		});
-	}
+	},
+	/**
+	 * 获取操作所在行的数据
+	 */
+	getActionData: function(){
+		let data = {};
+		let self = this;
+		Object.keys(this.keys).forEach(function(key){
+			data[self.keys[key]] = self.data[self.actKey][key];
+		});
+		return data;
+	},
 }

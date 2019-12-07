@@ -65,6 +65,10 @@ body{
 .form-multiselect-row label {
 	padding-right: 12px;
 }
+.note-view button:first-child,
+.note-view button:last-child{
+	display: none;
+}
 /*主体框架部分样式end*/
 
 

@@ -13,7 +13,7 @@ $(function () {
         id: 'siteForm',
         apiUrl: '/4cm/site/save',
         elements: {
-            sitename: {
+            name: {
                 name: '站点名称',
                 type: 'text',
                 placeholder: '请输入站点名称',
@@ -35,10 +35,15 @@ $(function () {
             },
             adddate: {
                 type: 'timer',
-                name: '添加时间',
-                format: 'yyyy-mm-dd hh:ii',
+                name: '添加日期',
                 column: 4,
-            }
+            },
+            description: {
+                type: 'html',
+                name: '站点内容',
+                default: '<font style="color:red">是地方舒服舒服是发收费</font>',
+                column: 12,
+            },
         }
     });
     Filter.init({
@@ -84,9 +89,7 @@ $(function () {
                 name: '修改',
                 className: 'btn-success',
                 click: function () {
-                    console.log(Table.actKey)
-                    console.log(Table.data[Table.actKey])
-                    Form.show(Table.data[Table.actKey]);
+                    Form.show(Table.getActionData());
                 }
             },
             del: {
