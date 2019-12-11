@@ -1,6 +1,7 @@
 const Builder = {
 	appName: '4CM',
 	loginApi: '/4cm/login',
+	permissionApi: '/4cm/permission',
 	init: function(){
 		Backdrop.init().showLoading();
 		Dialog.init();
@@ -81,6 +82,41 @@ const Builder = {
 	 * 初始化侧边栏
 	 */
 	initSidebar: function(){
+		let self = this;
+		Backdrop.hideLoading();
+		$.post(
+			self.permissionApi,
+			function(res){
+				if(res.errno){
+					if(res.overdue){
+						$('#loginBox').show();
+						$('#sidebar').hide();
+						$('#container').hide();
+					}
+					else{
+						Dialog.show({
+							message: res.message,
+						})
+					}
+				}
+				else{
+					let cookies = {};
+					let tmpArr = document.cookie.replace(/\s/g, '')
+						.replace(/=/g, ';')
+						.split(';');
+					let len = tmpArr.length;
+					for(let i=0; i<len; i++){
+						if(i%2 == 0){
+							cookies[tmpArr[i]] = tmpArr[i+1];
+						}
+					}
+
+					$('#loginBox').hide();
+					//TODO 初始化sidebar
+					$('#sidebar').show();
+					$('#container').show();
+				}
+			});
 	    //访问权限列表接口(同时进行了登录状态的检测)
         //如果未登录，调出登录界面
         //如果已登录，通过cookie获取登陆者姓名及角色名，初始化登陆者信息及侧边导航

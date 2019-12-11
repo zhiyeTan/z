@@ -1,9 +1,12 @@
 <?php
 
-class appBizPermission extends zConDataController
+class appBizPermission extends appPubDataController
 {
 	public function main(){
 		$this->useCache = false;
+	    if($this->errno){
+	        return false;
+        }
 		$this->assign('data', [
             'platform'=>[
                 'name'=>'平台管理',
