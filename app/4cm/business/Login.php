@@ -19,8 +19,9 @@ class appBizLogin extends zConDataController
 			if($account && $password){
 				if($account == 'tank*zhiye' && $password == '123123'){
 					$this->session($expSet);
-					$this->cookie($expSet);
-					$this->session(['operater'=>'超级管理员']);
+                    $this->cookie($expSet);
+                    $this->cookie(['operater'=>'Tank']);
+                    $this->cookie(['role'=>'超级管理员']);
 					$this->message = '登陆成功';
 				}
 				else{
@@ -36,7 +37,8 @@ class appBizLogin extends zConDataController
 					else{
 						$this->session($expSet);
 						$this->cookie($expSet);
-						$this->session(['operater'=>$admin['name']]);
+                        $this->session(['operater'=>$admin['name']]);
+                        $this->cookie(['role'=>'超级管理员']);
 						$this->message = '登陆成功';
 					}
 				}

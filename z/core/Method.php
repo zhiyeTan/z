@@ -281,18 +281,37 @@ class zCoreMethod
 			$result['data'] = $data;
 		}
 		else{
-			$keys = array_keys(reset($data));
-			//索引数组，也不需要分离键值
-			if(range(0, count($keys) - 1) == $keys){
-				$result['data'] = $data;
-			}
+		    //关联数组或二维数组非关联数组，不需要分离键值
+		    if(self::isAssocArray($data) || !self::isAssocArray(reset($data))){
+                $result['data'] = $data;
+            }
 			else{
-				$result['keys'] = $keys;
-				$result['data'] = array_map(function($v){
-					return array_values($v);
-				}, $data);
+                $keys = array_keys(reset($data));
+                $result['keys'] = $keys;
+                $result['data'] = array_map(function($v){
+                    return array_values($v);
+                }, $data);
 			}
 		}
 		return $result;
 	}
+
+    /**
+     * 是否为关联数组
+     * @access public
+     * @param  mixed  $data
+     * @return bool
+     */
+	public static function isAssocArray($data){
+	    $isAssoc = false;
+	    if(is_array($data)){
+	        foreach(array_keys($data) as $v){
+	            if(!is_numeric($v)){
+	                $isAssoc = true;
+	                break;
+                }
+            }
+        }
+	    return $isAssoc;
+    }
 }

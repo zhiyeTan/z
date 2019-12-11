@@ -2,16 +2,17 @@ const Builder = {
 	appName: '4CM',
 	loginApi: '/4cm/login',
 	init: function(){
-		Backdrop.init();
+		Backdrop.init().showLoading();
 		Dialog.init();
 		this.initLoginForm();
-		//this.initStruct();
+		this.initStruct();
+		this.initSidebar();
 	},
 	/**
 	 * 初始化登录表单
 	 */
 	initLoginForm: function(){
-		$('body').append('<div id="loginBox" class="container">' +
+		$('body').append('<div id="loginBox" class="container" style="display:none;">' +
 							'<form class="col-xs-8 col-xs-offset-2">' +
 								'<div class="form-group text-center h2">4CM</div>' +
 								'<div class="form-group">' +
@@ -53,7 +54,9 @@ const Builder = {
 					}
 					else{
 						$('#loginBox').hide();
-						$('#contentBox').show();
+						//TODO 初始化sidebar
+						$('#sidebar').show();
+						$('#container').show();
 					}
 				}
 			);
@@ -64,15 +67,23 @@ const Builder = {
 	 * 初始化页面结构
 	 */
 	initStruct: function(){
-		let sidebar = document.createElement('div');
-		sidebar.id = 'sidebar';
-		let container = document.createElement('div');
-		container.id = 'container';
-		let tabControl = document.createElement('div');
-		tabControl.id = 'tabControl';
-		tabControl.innerHTML = ''
-		container.append(tabControl);
-		$('body').prepend(container).prepend(sidebar);
+		$('body').prepend($('<div id="container" style="display:none;"></div>')).prepend(
+			$('<div id="sidebar" style="display:none;">' +
+				'<div id="sideScrollBar">' +
+					'<div id="sideScrollBarSlider"></div>' +
+				'</div>' +
+				'<div id="sidebarContent">' +
+				'</div>' +
+			'</div>')
+		);
+	},
+	/**
+	 * 初始化侧边栏
+	 */
+	initSidebar: function(){
+	    //访问权限列表接口(同时进行了登录状态的检测)
+        //如果未登录，调出登录界面
+        //如果已登录，通过cookie获取登陆者姓名及角色名，初始化登陆者信息及侧边导航
 	},
 }
 $(function(){

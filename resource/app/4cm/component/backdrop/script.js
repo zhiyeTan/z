@@ -31,6 +31,7 @@ const Backdrop = {
 					'</div>')[0];
 		backdropObj.append(loading);
 		$('body').append(backdropObj);
+		return this;
 	},
 	/**
 	 * 显示加载中提示

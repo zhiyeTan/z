@@ -8,11 +8,8 @@ class appPubViewController extends zConViewController
 //		if(strtolower(zCoreRequest::business()) != 'entrance' && (!$this->session('account') || $this->session('account') != $this->cookie('account'))){
 //			$this->goto(['m'=>'', 'b'=>'entrance']);
 //		}
-		$this->assign('operater', $this->session('operater'));
         $this->assign('title', '4cm');
         $this->assign('keywords', '4cm');
         $this->assign('description', '4cm');
-        $mai = new mAdminInfo();
-        $rs = $mai->getInfoMap('13580564273');
 	}
 }
