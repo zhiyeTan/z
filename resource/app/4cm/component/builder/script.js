@@ -3,6 +3,8 @@ const Builder = {
 	loginApi: '/4cm/login',
 	logoutApi: '/4cm/logout',
 	permissionApi: '/4cm/permission',
+	pageConfigDomain: 'http://s.4cm.com/',//页面配置的域名
+	pageConfig: {},//页面配置对象
 	init: function(){
 		Backdrop.init().showLoading();
 		Dialog.init();
@@ -177,7 +179,23 @@ const Builder = {
 					});
 					//绑定二级导航点击事件
 					$('#sidebarContent').on('click', '.nav-business-item', function(){
-						console.log($(this).attr('mod'), $(this).attr('biz'))
+						let mod = $(this).attr('mod');
+						let biz = $(this).attr('biz');
+						//已经加载过页面配置
+						if(self.pageConfig[`${mod}_${biz}`]){
+							console.log(2222222)
+						}
+						else{//未加载过
+							Backdrop.showLoading();
+							$.get(
+								`${self.pageConfigDomain}/app/${self.appName}/page/${mod}/${biz}/script.js`,
+								function(cfg){
+									eval(`Builder.pageConfig.${mod}_${biz} = ` + cfg);
+									console.log(self.pageConfig)
+									Backdrop.hideLoading();
+								}
+							);
+						}
 					});
 					$('#loginBox').hide();
 					$('#sidebar').show();
