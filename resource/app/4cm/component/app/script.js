@@ -1,10 +1,9 @@
-const Builder = {
+const App = {
 	appName: '4CM',
 	loginApi: '/4cm/login',
 	logoutApi: '/4cm/logout',
 	permissionApi: '/4cm/permission',
 	pageConfigDomain: 'http://s.4cm.com/',//页面配置的域名
-	pageConfig: {},//页面配置对象
 	init: function(){
 		Backdrop.init().showLoading();
 		Dialog.init();
@@ -181,17 +180,42 @@ const Builder = {
 					$('#sidebarContent').on('click', '.nav-business-item', function(){
 						let mod = $(this).attr('mod');
 						let biz = $(this).attr('biz');
+						let pkey = `${mod}_${biz}`;
 						//已经加载过页面配置
-						if(self.pageConfig[`${mod}_${biz}`]){
-							console.log(2222222)
+						if($('#'+pkey).length){
+							$('#'+pkey).show().siblings().hide();
 						}
 						else{//未加载过
 							Backdrop.showLoading();
 							$.get(
 								`${self.pageConfigDomain}/app/${self.appName}/page/${mod}/${biz}/script.js`,
 								function(cfg){
-									eval(`Builder.pageConfig.${mod}_${biz} = ` + cfg);
-									console.log(self.pageConfig)
+									eval(`config = ` + cfg);
+									$('#container').append(`<div id="${pkey}"></div>`);
+									Object.keys(config).forEach(function(key){
+										let cfg = config[key];
+										let ckey = pkey + '_' + key;
+										$('#'+pkey).append(`<div id="${ckey}" class="container-row"></div>`);
+										switch(key.toLowerCase()){
+											case 'form':
+												cfg.id = ckey;
+												Form.init(cfg);
+												break;
+											case 'filter':
+												cfg.id = ckey;
+												Filter.init(cfg);
+												break;
+											case 'pagination':
+												cfg.id = ckey;
+												Pagination.init(cfg);
+												break;
+											case 'table':
+												cfg.id = ckey;
+												Table.init(cfg);
+												break;
+										}
+									});
+									$('#'+pkey).show().siblings().hide();
 									Backdrop.hideLoading();
 								}
 							);
@@ -334,5 +358,5 @@ const Sidebar = {
 
 
 $(function(){
-	Builder.init();
+	App.init();
 });

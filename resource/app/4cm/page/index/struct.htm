@@ -1,21 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta attach="all">
 	<meta charset="UTF-8">
-	<title>{{title}}</title>
-	<meta name="Keywords" content="{{keywords}}"/>
-	<meta name="Description" content="{{description}}"/>
-	<component id="meta"></component>
-	<component id="global" attach="css"></component>
+	<title>4CM</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="author" content="谈治烨">
+	<meta name="Copyright" content="4CM工作室">
+	<meta name="applicable-device" content="pc, mobile">
+	<meta name="renderer" content="webkit">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico" media="screen"/>
+	<link rel="stylesheet" href="/ui/bootstrap4/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="/ui/iconfont/bootstrap.css" />
+	<script type="text/javascript" src="/common/jquery/3.3.1.min.js"></script>
+	<script type="text/javascript" src="/ui/bootstrap4/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="/ui/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" />
+	<script type="text/javascript" src="/ui/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+	<script type="text/javascript" src="/ui/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+	<link rel="stylesheet" href="/ui/summernote/summernote-lite.css" />
+	<script type="text/javascript" src="/ui/summernote/summernote-lite.min.js"></script>
+	<script type="text/javascript" src="/ui/summernote/lang/summernote-zh-CN.js"></script>
+	<link rel="stylesheet" href="/frame/4cm/style.css" />
+	<script type="text/javascript" src="/frame/4cm/app.js"></script>
 </head>
 	<body>
-		<component id="backdrop" attach="js"></component>
-		<component id="dialog" attach="js"></component>
-		<component id="form" attach="js"></component>
-		<component id="filter" attach="js"></component>
-		<component id="table" attach="js"></component>
-		<component id="pagination" attach="js"></component>
-		<component id="builder" attach="js"></component>
 	</body>
 </html>
+<script>
+$(function(){
+	App.init({
+		appName: '4CM',
+		loginApi: '/4cm/login',
+		logoutApi: '/4cm/logout',
+		permissionApi: '/4cm/permission',
+		pageConfigDomain: 'http://s.4cm.com/',
+	})
+})
+</script>
