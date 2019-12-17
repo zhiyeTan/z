@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>test</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="http://s.4cm.com/common/jquery/3.3.1.min.js"></script>
+</head>
+	<body>
+	</body>
+</html>
+<script>
+
+const App = {
+	pages:{},
+	/**
+	 * 页面对象(基本包含按钮组、表单、筛选器、表格、分页器)
+	 */
+	page: {
+		id: '',//页面ID
+		formApiUrl: '',//表单接口
+		dataApiUrl: '',//数据接口
+		data:{
+			page: 1,//当前页码
+			onPageNum: 1,//每页记录数
+			recordNum: 0,//总记录数
+			pageSideNum: 2,//两侧显示的页码数量
+			keys: [],//键名数组，键名索引和数据索引保持一致
+			list: [],//列表数据
+			thead: [],//表头信息
+			colKey: -1,//选定列对应的索引
+		},
+		timerBasicParam: {//时间选择器基本参数(页面初始化后删掉)
+			language:  'zh-CN',
+			weekStart: 1,
+			todayBtn:  1,
+			todayHighlight: 1,
+			autoclose: 1,
+			maxView: 4,
+			startView: 2,
+			// format: 'yyyy-mm-dd',
+			// minView: 1,
+		},
+		//设置属性
+		setAttribute: function(name, value){
+			this[name] = value;
+		},
+		/**
+		 * 渲染按钮组(页面初始化后删掉)
+		 * @param cfg
+		 * [
+		 *     {
+		 *         name: '',//名称
+		 *         class: '',//样式
+		 *         click: '',//点击事件(匿名函数无法调用page的数据)
+		 *     },xN
+		 * ]
+		 */
+		renderBtnGroup: function(cfg){
+			let group = $('<div class="container-row"></div>');
+			Object.keys(cfg).forEach(idx => {
+				let btn = $(`<button class="btn btn-default ${cfg[idx].class}">${cfg[idx].name}</button>`);
+				if(cfg[idx].click){
+					btn.on('click', () => this[cfg[idx].click]());
+				}
+				group.append(btn);
+			});
+			$('#'+this.id).append(group);
+		},
+		/**
+		 * 渲染表单(页面初始化后删掉)
+		 * @param cfg
+		 * [
+		 * 		{
+		 *     		name: '',//表单元素的名字
+		 *     		type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
+		 *     		placeholder: '',//描述文字
+		 *     		options: {//选项(仅select/radio/checkbox类型用到)
+		 *     			value: text, //选项值与提示文字键值对
+		 *     		},
+		 *     		unit: '',//单位描述(空表示没有单位)
+		 *     		value: '',//值(checkbox/files类型为数组)
+		 *     		default: '',//默认值(checkbox/files类型为数组)
+		 *     		regex: '',//检验值的正则表达式(空表示不校验)
+		 *     		tips: '',//校验不通过时的提示信息
+		 *     		format: '',//时间格式(仅timer类型用到)
+		 *     		column: 0,//所占列数(一行12列)
+		 *     	}
+		 * ]
+		 */
+		renderForm: (cfg) => {
+
+		},
+	},
+	renderPage: function(page, config) {
+		$('body').append($(`<div id="${page}"></div>`));
+		this.pages[page] = Object.assign({}, this.page);
+		this.pages[page].id = page;
+		this.pages[page].renderBtnGroup(config.btnGroups);
+		delete config.btnGroups;
+		Object.keys(config).forEach(key => {
+			this.pages[page].setAttribute(key, config[key]);
+		});
+	}
+}
+$(function(){
+	App.renderPage('apage', {
+		btnGroups: [
+			{
+				name: '新增',
+				class: 'btn-primary',
+				click: 'addNew',
+			}
+		],
+		addNew: function(){
+			console.log(this.id)
+		},
+	});
+	App.renderPage('bpage', {
+		btnGroups: [
+			{
+				name: '删除',
+				class: 'btn-primary',
+				click: 'delNew',
+			}
+		],
+		delNew: function(){
+			console.log(this.id)
+		},
+	});
+})
+
+</script>
