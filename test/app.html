@@ -1,133 +1,249 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="UTF-8">
-	<title>test</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<script type="text/javascript" src="http://s.4cm.com/common/jquery/3.3.1.min.js"></script>
+    <meta charset="UTF-8">
+    <title>test</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="http://s.4cm.com/common/jquery/3.3.1.min.js"></script>
 </head>
-	<body>
-	</body>
+<body>
+
+<div id="platform_site_Form" class="container-row" style="display: none;">
+    <div class="row">
+        <div class="col-sm-4">
+			<label>站点名称</label>
+            <div class="input-group">
+				<input type="text" name="name" placeholder="请输入站点名称" class="form-control">
+                <div class="input-group-append">
+					<span class="input-group-text">.com</span>
+				</div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+			<label>站点类型</label>
+            <div class="form-multiselect-row">
+				<label><input type="checkbox" name="sitetype" value="0">个人</label>
+				<label><input type="checkbox" type="checkbox" name="sitetype" value="2">政府</label>
+				<label><input type="checkbox" name="sitetype" value="3">公益</label>
+			</div>
+        </div>
+        <div class="col-sm-4">
+			<label>添加日期</label>
+			<input type="timer" name="adddate" placeholder="" class="form-control" readonly="">
+		</div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <button class="btn btn-success" id="platform_site_Form_btn_submit">提交</button>
+            <button class="btn btn-default" id="platform_site_Form_btn_submit">取消</button>
+        </div>
+    </div>
+</div>
+
+</body>
 </html>
 <script>
 
-const App = {
-	pages:{},
-	/**
-	 * 页面对象(基本包含按钮组、表单、筛选器、表格、分页器)
-	 */
-	page: {
-		id: '',//页面ID
-		formApiUrl: '',//表单接口
-		dataApiUrl: '',//数据接口
-		data:{
-			page: 1,//当前页码
-			onPageNum: 1,//每页记录数
-			recordNum: 0,//总记录数
-			pageSideNum: 2,//两侧显示的页码数量
-			keys: [],//键名数组，键名索引和数据索引保持一致
-			list: [],//列表数据
-			thead: [],//表头信息
-			colKey: -1,//选定列对应的索引
-		},
-		timerBasicParam: {//时间选择器基本参数(页面初始化后删掉)
-			language:  'zh-CN',
-			weekStart: 1,
-			todayBtn:  1,
-			todayHighlight: 1,
-			autoclose: 1,
-			maxView: 4,
-			startView: 2,
-			// format: 'yyyy-mm-dd',
-			// minView: 1,
-		},
-		//设置属性
-		setAttribute: function(name, value){
-			this[name] = value;
-		},
-		/**
-		 * 渲染按钮组(页面初始化后删掉)
-		 * @param cfg
-		 * [
-		 *     {
-		 *         name: '',//名称
-		 *         class: '',//样式
-		 *         click: '',//点击事件(匿名函数无法调用page的数据)
-		 *     },xN
-		 * ]
-		 */
-		renderBtnGroup: function(cfg){
-			let group = $('<div class="container-row"></div>');
-			Object.keys(cfg).forEach(idx => {
-				let btn = $(`<button class="btn btn-default ${cfg[idx].class}">${cfg[idx].name}</button>`);
-				if(cfg[idx].click){
-					btn.on('click', () => this[cfg[idx].click]());
-				}
-				group.append(btn);
-			});
-			$('#'+this.id).append(group);
-		},
-		/**
-		 * 渲染表单(页面初始化后删掉)
-		 * @param cfg
-		 * [
-		 * 		{
-		 *     		name: '',//表单元素的名字
-		 *     		type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
-		 *     		placeholder: '',//描述文字
-		 *     		options: {//选项(仅select/radio/checkbox类型用到)
-		 *     			value: text, //选项值与提示文字键值对
-		 *     		},
-		 *     		unit: '',//单位描述(空表示没有单位)
-		 *     		value: '',//值(checkbox/files类型为数组)
-		 *     		default: '',//默认值(checkbox/files类型为数组)
-		 *     		regex: '',//检验值的正则表达式(空表示不校验)
-		 *     		tips: '',//校验不通过时的提示信息
-		 *     		format: '',//时间格式(仅timer类型用到)
-		 *     		column: 0,//所占列数(一行12列)
-		 *     	}
-		 * ]
-		 */
-		renderForm: (cfg) => {
+    const App = {
+        pages: {},
+        /**
+         * 页面对象(基本包含按钮组、表单、筛选器、表格、分页器)
+         */
+        page: {
+            id: '',//页面ID
+            formApiUrl: '',//表单接口
+            dataApiUrl: '',//数据接口
+            data: {
+                page: 1,//当前页码
+                onPageNum: 1,//每页记录数
+                recordNum: 0,//总记录数
+                pageSideNum: 2,//两侧显示的页码数量
+                keys: [],//键名数组，键名索引和数据索引保持一致
+                list: [],//列表数据
+                thead: [],//表头信息
+                colKey: -1,//选定列对应的索引
+				form: {},
+            },
+            timerBasicParam: {//时间选择器基本参数(页面初始化后删掉)
+                language: 'zh-CN',
+                weekStart: 1,
+                todayBtn: 1,
+                todayHighlight: 1,
+                autoclose: 1,
+                maxView: 4,
+                startView: 2,
+                // format: 'yyyy-mm-dd',
+                // minView: 1,
+            },
+            //设置属性
+            setAttribute: function (key, value) {
+                if (['id', 'formApiUrl', 'dataApiUrl', 'data', 'setAttribute', 'cleanAttribute'].indexOf(key) < 0) {
+                    if (this.hasOwnProperty(key) && typeof (this[key]) === 'function') {
+                        let mapKey = `${key}_${parseInt(key, 32)}`;
+                        if (!this.hasOwnProperty(mapKey)) {
+                            this[mapKey] = [];
+                            this[mapKey].push(this[key]);
+                        }
+                        this[mapKey].push(value);
+                        this[key] = () => {
+                            Object.keys(this[mapKey]).forEach(i => {
+                                this[mapKey][i]();
+                            })
+                        }
+                    } else {
+                        this[key] = value;
+                    }
+                }
+            },
+            //创建页面后清除无用属性
+            cleanAttribute: function () {
+                delete this.timerBasicParam;
+                delete this.renderBtnGroup;
+                delete this.renderForm;
+            },
+            /**
+             * 渲染按钮组(页面初始化后删掉)
+             * @param cfg
+             * [
+             *     {
+             *         name: '',//名称
+             *         class: '',//样式
+             *         click: '',//点击事件(匿名函数无法调用page的数据)
+             *     },xN
+             * ]
+             */
+            renderBtnGroup: function (cfg) {
+                let group = $('<div class="container-row"></div>');
+                Object.keys(cfg).forEach(i => {
+                    let btn = $(`<button class="btn btn-default ${cfg[i].class}">${cfg[i].name}</button>`);
+                    if (cfg[i].click) {
+                        btn.on('click', () => this[cfg[i].click]());
+                    }
+                    group.append(btn);
+                });
+                $('#' + this.id).append(group);
+            },
+            /**
+             * 渲染表单(页面初始化后删掉)
+             * @param cfg
+			 * [
+			 *     {
+			 *         key: '',//表单元素的key
+			 *         name: '',//表单元素的名字
+			 *         type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
+			 *         placeholder: '',//描述文字
+			 *         options: {//选项(仅select/radio/checkbox类型用到)
+			 *         		value: text, //选项值与提示文字键值对
+			 *         },
+			 *         unit: '',//单位描述(空表示没有单位)
+			 *         value: '',//值(checkbox/files类型为数组)
+			 *         default: '',//默认值(checkbox/files类型为数组)
+			 *         regex: '',//检验值的正则表达式(空表示不校验)
+			 *         tips: '',//校验不通过时的提示信息
+			 *         format: '',//时间格式(仅timer类型用到)
+			 *         column: 0,//所占列数(一行12列)
+			 *     },xN
+			 * ]
+             */
+            renderForm: function (cfg) {
+            	Object.keys(cfg).forEach(i => {
+					let info = cfg[i];
+					//校正参数
+					info.name = info.hasOwnProperty('name') ? info.name : '';
+					info.type = info.hasOwnProperty('type') ? info.type : 'text';
+					info.placeholder = info.hasOwnProperty('placeholder') ? info.placeholder : '';
+					info.options = info.hasOwnProperty('options') ? info.options : {};
+					info.unit = info.hasOwnProperty('unit') ? info.unit : '';
+					info.default = info.hasOwnProperty('default') ? info.default : '';
+					info.regex = info.hasOwnProperty('regex') ? info.regex : '';
+					info.tips = info.hasOwnProperty('tips') ? info.tips : '';
+					info.format = info.hasOwnProperty('format') ? info.format : '';
+					info.column = info.hasOwnProperty('column') ? info.column : 12;
+                    info.value = info.default;
+					if(['radio','checkbox'].indexOf(info.type) >= 0 && !Array.isArray(info.default) && info.default !== ''){
+						info.default = [info.default.toString()];
+						if(info.type == 'checkbox'){
+                            info.value = info.default;
+                        }
+					}
+					//写到data的表单映射
+            		this.data.form[info.key] = {
+            			default: info.default,
+						value: info.value,
+						regex: info.regex,
+						tips: info.tips,
+					}
+					//单选和多选
+					if(['radio','checkbox'].indexOf(info.type) >= 0){
+					    let html = '';
+						Object.keys(info.options).forEach(key => {
+						    let name = info.key,
+                                text = info.options[key],
+                                checked = info.default.indexOf(key) >= 0;
+                            html += `<label>
+						    <input type="checkbox" name="${info.key}" value="${key}">${info.options[key]}</label>`;
+						});
+					}
+					/**
+					 * <div class="form-multiselect-row">
+					 <label><input type="checkbox" name="sitetype" value="0">个人</label>
+					 <label><input type="checkbox" name="sitetype" value="2">政府</label>
+					 <label><input type="checkbox" name="sitetype" value="3">公益</label>
+					 </div>
+					 */
 
-		},
-	},
-	renderPage: function(page, config) {
-		$('body').append($(`<div id="${page}"></div>`));
-		this.pages[page] = Object.assign({}, this.page);
-		this.pages[page].id = page;
-		this.pages[page].renderBtnGroup(config.btnGroups);
-		delete config.btnGroups;
-		Object.keys(config).forEach(key => {
-			this.pages[page].setAttribute(key, config[key]);
-		});
-	}
-}
-$(function(){
-	App.renderPage('apage', {
-		btnGroups: [
-			{
-				name: '新增',
-				class: 'btn-primary',
-				click: 'addNew',
-			}
-		],
-		addNew: function(){
-			console.log(this.id)
-		},
-	});
-	App.renderPage('bpage', {
-		btnGroups: [
-			{
-				name: '删除',
-				class: 'btn-primary',
-				click: 'delNew',
-			}
-		],
-		delNew: function(){
-			console.log(this.id)
-		},
-	});
-})
+					$('<div class="col-sm-4">' +
+							'<label>添加日期</label>' +
+							'<input type="timer" name="adddate" placeholder="" class="form-control" readonly="">' +
+						'</div>');
+				});
+            },
+        },
+        renderPage: function (page, config) {
+            if (!this.pages.hasOwnProperty(page)) {
+                $('body').append($(`<div id="${page}"></div>`));
+                this.pages[page] = Object.assign({}, this.page);
+                this.pages[page].id = page;
+            }
+            if (config.btnGroups) {
+                this.pages[page].renderBtnGroup(config.btnGroups);
+                delete config.btnGroups;
+            }
+            Object.keys(config).forEach(key => {
+                this.pages[page].setAttribute(key, config[key]);
+            });
+        }
+    }
+    $(function () {
+        App.renderPage('apage', {
+            btnGroups: [
+                {
+                    name: '新增',
+                    class: 'btn-primary',
+                    click: 'addNew',
+                }
+            ],
+            addNew: function () {
+                console.log('new')
+            },
+        });
+        // App.renderPage('apage', {
+        // 	addNew: function(){
+        // 		console.log('new2')
+        // 	},
+        // });
+        // App.renderPage('bpage', {
+        // 	btnGroups: [
+        // 		{
+        // 			name: '删除',
+        // 			class: 'btn-primary',
+        // 			click: 'delNew',
+        // 		}
+        // 	],
+        // 	delNew: function(){
+        // 		console.log(this.id)
+        // 	},
+        // });
+    })
 
 </script>
