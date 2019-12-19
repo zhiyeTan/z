@@ -89,6 +89,18 @@
                 delete this.renderForm;
             },
             /**
+             * 表单提交
+             */
+            formSubmit: function(){
+                console.log(this.data.form);
+            },
+            /**
+             * 表单取消
+             */
+            formCancel: function(){
+                $('#' + this.id).find('form').hide();
+            },
+            /**
              * 渲染按钮组(页面初始化后删掉)
              * @param cfg
              * [
@@ -133,7 +145,7 @@
 			 * ]
              */
             renderForm: function (cfg) {
-                let form = $('<div class="container-row"></div>');
+                let form = $('<form class="container-row"></form>');
                 let colNumOnRow = 0;//一行的列数
                 let lastIdx = cfg.length - 1;//最后一个配置的索引
                 let rowBox = $('<div class="row"></div>');
@@ -186,9 +198,7 @@
 					//文本框和富文本
 					else if(['textarea','html'].indexOf(info.type) >= 0){
 					    let sign = info.type == 'html' ? 'editor="1"' : '';
-					    html = `<textarea name="${info.key}" class="form-control" placeholder="${info.placeholder}" ${sign}>
-					            ${info.value}
-					            </textarea>`;
+					    html = `<textarea name="${info.key}" class="form-control" placeholder="${info.placeholder}" ${sign}>${info.value}</textarea>`;
                     }
                     //下拉选择框
 					else if(info.type == 'select'){
@@ -220,22 +230,22 @@
                                     ${html}
                                 </div>`);
                     //绑定表单元素的change事件
-                    colBox.find('input').on('change', () => {
-                        //多选项要单独处理
-                        if(info.type == 'checkbox'){
-                            if(!Array.isArray(self.elements[key].value)){
-                                self.elements[key].value = [];
-                            }
-                            if($(this).prop('checked')){
-                                self.elements[key].value.push(val);
+                    colBox.find(`[name=${info.key}]`).each((j, e) => {
+                        $(e).on('change', () => {
+                            let value = $(e).val();
+                            if(info.type == 'checkbox'){
+                                if($(e).prop('checked')){
+                                    this.data.form[info.key].value.push(value);
+                                }
+                                else{
+                                    this.data.form[info.key].value.splice(
+                                        this.data.form[info.key].value.indexOf(value), 1);
+                                }
                             }
                             else{
-                                self.elements[key].value.splice(self.elements[key].value.indexOf(val), 1);
+                                this.data.form[info.key].value = value;
                             }
-                        }
-                        else{
-                            self.elements[key].value = val;
-                        }
+                        })
                     });
                     //初始化时间选择器
                     if(info.type == 'timer'){
@@ -266,6 +276,21 @@
                         form.append(rowBox);
                     }
 				});
+            	//提交和取消按钮
+                let actions = $('<div class="row">' +
+                                '<div class="col-12">' +
+                                    '<button name="submit" class="btn btn-success">提交</button>' +
+                                    '<button name="cancel" class="btn btn-default">取消</button>' +
+                                '</div>' +
+                            '</div>');
+                actions.find('[name=cancel]').on('click', () => {
+                    this.formCancel();
+                });
+                form.append(actions);
+                form.on('submit', (e) => {
+                    e.preventDefault();
+                    this.formSubmit();
+                });
                 $('#' + this.id).append(form);
                 //初始化富文本
                 $('#' + this.id).find('[editor=1]').each((i, e) => {
@@ -275,7 +300,6 @@
                         callbacks: {
                             onChange: (contents) => {
                                 this.data.form[$(e).attr('name')].value = contents;
-                                console.log(this.data.form)
                             }
                         }
                     });
@@ -299,10 +323,16 @@
             Object.keys(config).forEach(key => {
                 this.pages[page].on(key, config[key]);
             });
+            this.pages[page].clean();
         }
     }
     $(function () {
-        App.renderPage('apage', {
+        // App.renderPage('apage', {
+        // 	addNew: function(){
+        // 		console.log('new2')
+        // 	},
+        // });
+        App.renderPage('bpage', {
             btnGroups: [
                 {
                     name: '新增',
@@ -311,15 +341,9 @@
                 }
             ],
             addNew: function () {
-                console.log('new')
+                console.log(this.id)
+                $('#'+this.id).find('form').show();
             },
-        });
-        // App.renderPage('apage', {
-        // 	addNew: function(){
-        // 		console.log('new2')
-        // 	},
-        // });
-        App.renderPage('bpage', {
         	form: [
                 {
                     key: 'sitename',
@@ -328,6 +352,18 @@
                     placeholder: '请输入站点名称',
                     default: '',
                     column: 4,
+                },
+                {
+                    key: 'sitecontent',
+                    name: '站点内容',
+                    type: 'checkbox',
+                    options: {
+                        0: '个人',
+                        1: '企业',
+                        2: '政府',
+                        3: '公益'
+                    },
+                    default: 0,
                 },
         	],
         });
