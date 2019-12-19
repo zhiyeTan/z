@@ -105,7 +105,6 @@ class zConViewCompiler
 		if(!zCoreConfig::$options['compile_enable'] || !is_file($cplPath)){
 			//模版不存在，抛出异常
 			if(!is_file($tplPath)){
-			    echo $tplPath;exit;
 				trigger_error(T_TEMPLATE_NOT_EXIST, E_USER_ERROR);
 			}
 			$content = zCoreMethod::read($tplPath) ?: '';

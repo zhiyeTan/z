@@ -4,42 +4,18 @@
     <meta charset="UTF-8">
     <title>test</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="http://s.4cm.com/ui/bootstrap4/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="http://s.4cm.com/ui/iconfont/bootstrap.css" />
     <script type="text/javascript" src="http://s.4cm.com/common/jquery/3.3.1.min.js"></script>
+    <script type="text/javascript" src="http://s.4cm.com/ui/bootstrap4/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="http://s.4cm.com/ui/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" />
+    <script type="text/javascript" src="http://s.4cm.com/ui/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+    <script type="text/javascript" src="http://s.4cm.com/ui/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+    <link rel="stylesheet" href="http://s.4cm.com/ui/summernote/summernote-lite.css" />
+    <script type="text/javascript" src="http://s.4cm.com/ui/summernote/summernote-lite.min.js"></script>
+    <script type="text/javascript" src="http://s.4cm.com/ui/summernote/lang/summernote-zh-CN.js"></script>
 </head>
 <body>
-
-<div id="platform_site_Form" class="container-row" style="display: none;">
-    <div class="row">
-        <div class="col-sm-4">
-			<label>站点名称</label>
-            <div class="input-group">
-				<input type="text" name="name" placeholder="请输入站点名称" class="form-control">
-                <div class="input-group-append">
-					<span class="input-group-text">.com</span>
-				</div>
-            </div>
-        </div>
-        <div class="col-sm-4">
-			<label>站点类型</label>
-            <div class="form-multiselect-row">
-				<label><input type="checkbox" name="sitetype" value="0">个人</label>
-				<label><input type="checkbox" type="checkbox" name="sitetype" value="2">政府</label>
-				<label><input type="checkbox" name="sitetype" value="3">公益</label>
-			</div>
-        </div>
-        <div class="col-sm-4">
-			<label>添加日期</label>
-			<input type="timer" name="adddate" placeholder="" class="form-control" readonly="">
-		</div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <button class="btn btn-success" id="platform_site_Form_btn_submit">提交</button>
-            <button class="btn btn-default" id="platform_site_Form_btn_submit">取消</button>
-        </div>
-    </div>
-</div>
-
 </body>
 </html>
 <script>
@@ -75,9 +51,13 @@
                 // format: 'yyyy-mm-dd',
                 // minView: 1,
             },
+            //检查是否保留关键字
+            checkReservedKeywords: function(key){
+                return ['id', 'formApiUrl', 'dataApiUrl', 'data', 'on', 'off', 'clean'].indexOf(key) >= 0;
+            },
             //设置属性
-            setAttribute: function (key, value) {
-                if (['id', 'formApiUrl', 'dataApiUrl', 'data', 'setAttribute', 'cleanAttribute'].indexOf(key) < 0) {
+            on: function (key, value) {
+                if (!this.checkReservedKeywords(key)) {
                     if (this.hasOwnProperty(key) && typeof (this[key]) === 'function') {
                         let mapKey = `${key}_${parseInt(key, 32)}`;
                         if (!this.hasOwnProperty(mapKey)) {
@@ -95,8 +75,15 @@
                     }
                 }
             },
+            //移除属性
+            off: function(key){
+                if (!this.checkReservedKeywords(key)) {
+                    delete this[key];
+                    delete this[`${key}_${parseInt(key, 32)}`];
+                }
+            },
             //创建页面后清除无用属性
-            cleanAttribute: function () {
+            clean: function () {
                 delete this.timerBasicParam;
                 delete this.renderBtnGroup;
                 delete this.renderForm;
@@ -146,8 +133,14 @@
 			 * ]
              */
             renderForm: function (cfg) {
+                let form = $('<div class="container-row"></div>');
+                let colNumOnRow = 0;//一行的列数
+                let lastIdx = cfg.length - 1;//最后一个配置的索引
+                let rowBox = $('<div class="row"></div>');
             	Object.keys(cfg).forEach(i => {
-					let info = cfg[i];
+					let colBox,
+                        html = '',
+                        info = cfg[i];
 					//校正参数
 					info.name = info.hasOwnProperty('name') ? info.name : '';
 					info.type = info.hasOwnProperty('type') ? info.type : 'text';
@@ -159,13 +152,15 @@
 					info.tips = info.hasOwnProperty('tips') ? info.tips : '';
 					info.format = info.hasOwnProperty('format') ? info.format : '';
 					info.column = info.hasOwnProperty('column') ? info.column : 12;
-                    info.value = info.default;
-					if(['radio','checkbox'].indexOf(info.type) >= 0 && !Array.isArray(info.default) && info.default !== ''){
-						info.default = [info.default.toString()];
-						if(info.type == 'checkbox'){
-                            info.value = info.default;
+					if(info.type == 'checkbox' && !Array.isArray(info.default)){
+					    if(info.default !== ''){
+                            info.default = [info.default.toString()];
+                        }
+						else{
+                            info.default = [];
                         }
 					}
+                    info.value = info.default;
 					//写到data的表单映射
             		this.data.form[info.key] = {
             			default: info.default,
@@ -175,28 +170,116 @@
 					}
 					//单选和多选
 					if(['radio','checkbox'].indexOf(info.type) >= 0){
-					    let html = '';
 						Object.keys(info.options).forEach(key => {
-						    let name = info.key,
-                                text = info.options[key],
-                                checked = info.default.indexOf(key) >= 0;
+						    let checked = '';
+						    if((info.type == 'radio' && info.default == key)
+                            || (info.type == 'checkbox' && info.default.indexOf(key) >= 0)){
+						        checked = 'checked="checked"';
+                            }
                             html += `<label>
-						    <input type="checkbox" name="${info.key}" value="${key}">${info.options[key]}</label>`;
+                                    <input type="${info.type}" name="${info.key}" value="${key}" ${checked}>
+                                    ${info.options[key]}
+                                    </label>`;
 						});
+                        html = `<div class="form-multiselect-row">${html}</div>`;
 					}
-					/**
-					 * <div class="form-multiselect-row">
-					 <label><input type="checkbox" name="sitetype" value="0">个人</label>
-					 <label><input type="checkbox" name="sitetype" value="2">政府</label>
-					 <label><input type="checkbox" name="sitetype" value="3">公益</label>
-					 </div>
-					 */
-
-					$('<div class="col-sm-4">' +
-							'<label>添加日期</label>' +
-							'<input type="timer" name="adddate" placeholder="" class="form-control" readonly="">' +
-						'</div>');
+					//文本框和富文本
+					else if(['textarea','html'].indexOf(info.type) >= 0){
+					    let sign = info.type == 'html' ? 'editor="1"' : '';
+					    html = `<textarea name="${info.key}" class="form-control" placeholder="${info.placeholder}" ${sign}>
+					            ${info.value}
+					            </textarea>`;
+                    }
+                    //下拉选择框
+					else if(info.type == 'select'){
+                        Object.keys(info.options).forEach(key => {
+                            let selected = info.default == key ? 'selected="selected"' : '';
+                            html += `<option value="${key}" ${selected}>${info.options[key]}</option>`;
+                        });
+                        html = `<select name="${info.key}" class="form-control">${html}</select>`;
+                    }
+					//input输入框
+                    else{
+                        let appendHtml = '',
+                            readOnly = info.type == 'timer' ? 'readOnly=true' : '';
+                        if(info.unit){
+                            appendHtml = `<div class="input-group-append">
+                                                <span class="input-group-text">${info.unit}</span>
+                                            </div>`;
+                        }
+                        html = `<div class="input-group">
+                                    <input type="text" class="form-control" name="${info.key}"
+                                    placeholder="${info.placeholder}" value="${info.value}" ${readOnly}>
+                                     ${appendHtml}
+                                </div>`;
+                    }
+					//创建列对象
+					let colNum = info.column > 0 ? info.column : 12;
+                    colBox = $(`<div class="col-sm-${colNum}">
+                                    <label>${info.name}</label>
+                                    ${html}
+                                </div>`);
+                    //绑定表单元素的change事件
+                    colBox.find('input').on('change', () => {
+                        //多选项要单独处理
+                        if(info.type == 'checkbox'){
+                            if(!Array.isArray(self.elements[key].value)){
+                                self.elements[key].value = [];
+                            }
+                            if($(this).prop('checked')){
+                                self.elements[key].value.push(val);
+                            }
+                            else{
+                                self.elements[key].value.splice(self.elements[key].value.indexOf(val), 1);
+                            }
+                        }
+                        else{
+                            self.elements[key].value = val;
+                        }
+                    });
+                    //初始化时间选择器
+                    if(info.type == 'timer'){
+                        this.timerBasicParam.minView = 2;
+                        this.timerBasicParam.format = info.format ? info.format : 'yyyy-mm-dd';
+                        if(/h/i.test(this.timerBasicParam.format)){
+                            this.timerBasicParam.minView = 1;
+                        }
+                        colBox.find('input').datetimepicker(this.timerBasicParam);
+                    }
+                    //看一下应该放到哪一行
+					colNumOnRow += colNum;
+					if(colNumOnRow <= 12){
+                        rowBox.append(colBox);
+                    }
+                    if(colNumOnRow >= 12 || i == lastIdx){
+                        form.append(rowBox);
+                        rowBox = $('<div class="row"></div>');
+                        if(colNumOnRow > 12){
+                            rowBox.append(colBox);
+                            colNumOnRow = colNum;
+                        }
+                        else{
+                            colNumOnRow = 0;
+                        }
+                    }
+                    if(colNumOnRow >= 12 && i == lastIdx){
+                        form.append(rowBox);
+                    }
 				});
+                $('#' + this.id).append(form);
+                //初始化富文本
+                $('#' + this.id).find('[editor=1]').each((i, e) => {
+                    $(e).summernote({
+                        lang: 'zh-CN',
+                        height: 150,
+                        callbacks: {
+                            onChange: (contents) => {
+                                this.data.form[$(e).attr('name')].value = contents;
+                                console.log(this.data.form)
+                            }
+                        }
+                    });
+                });
             },
         },
         renderPage: function (page, config) {
@@ -209,8 +292,12 @@
                 this.pages[page].renderBtnGroup(config.btnGroups);
                 delete config.btnGroups;
             }
+            if (config.form){
+                this.pages[page].renderForm(config.form);
+                delete config.form;
+            }
             Object.keys(config).forEach(key => {
-                this.pages[page].setAttribute(key, config[key]);
+                this.pages[page].on(key, config[key]);
             });
         }
     }
@@ -232,18 +319,18 @@
         // 		console.log('new2')
         // 	},
         // });
-        // App.renderPage('bpage', {
-        // 	btnGroups: [
-        // 		{
-        // 			name: '删除',
-        // 			class: 'btn-primary',
-        // 			click: 'delNew',
-        // 		}
-        // 	],
-        // 	delNew: function(){
-        // 		console.log(this.id)
-        // 	},
-        // });
+        App.renderPage('bpage', {
+        	form: [
+                {
+                    key: 'sitename',
+                    name: '站点名称',
+                    type: 'timer',
+                    placeholder: '请输入站点名称',
+                    default: '',
+                    column: 4,
+                },
+        	],
+        });
     })
 
 </script>

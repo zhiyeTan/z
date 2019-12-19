@@ -831,6 +831,7 @@ const Form = {
 				}
 				colBox.append(eleObj);
 			}
+			//下拉选择框
 			else if(info.type == 'select'){
 				eleObj = document.createElement('select');
 				eleObj.name = key;
