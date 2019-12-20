@@ -37,8 +37,10 @@
                 keys: [],//键名数组，键名索引和数据索引保持一致
                 list: [],//列表数据
                 thead: [],//表头信息
-                colKey: -1,//选定列对应的索引
-				form: {},
+                listIdx: -1,//选定列对应的索引
+				form: {},//表单信息
+                filter: {},//过滤器信息
+                actions: [],//表格操作
             },
             timerBasicParam: {//时间选择器基本参数(页面初始化后删掉)
                 language: 'zh-CN',
@@ -87,18 +89,119 @@
                 delete this.timerBasicParam;
                 delete this.renderBtnGroup;
                 delete this.renderForm;
+                delete this.renderFilter;
+                delete this.setThead;
+                delete this.setActions;
             },
             /**
-             * 表单提交
+             * 提交表单
              */
-            formSubmit: function(){
+            submitForm: function(){
                 console.log(this.data.form);
+                this.hideForm();
             },
             /**
-             * 表单取消
+             * 隐藏表单
              */
-            formCancel: function(){
-                $('#' + this.id).find('form').hide();
+            hideForm: function(){
+                $('#' + this.id + ' form').hide();
+            },
+            /**
+             * 显示表单
+             */
+            showForm: function(data){
+                Object.keys(this.data.form).forEach(key => {
+                    let info = this.data.form[key],
+                        newVal = data.hasOwnProperty(key) ? data[key] : info.default,
+                        target = $('#' + this.id + 'form [name=' + key + ']');
+                    //多选项
+                    if(info.type == 'checkbox'){
+                        this.data.form[key].value = [].concat(newVal);
+                        target.removeAttribute('checked');
+                        this.data.form[key].value.forEach(val => {
+                            $('#' + this.id + 'form [name=' + key + '][value=' + val + ']').prop('checked', true);
+                        });
+                    }
+                    //富文本
+                    else if(info.type == 'html'){
+                        target.summernote('code', newVal);
+                    }
+                    else{
+                        this.data.form[key].value = newVal;
+                        target.val(newVal);
+                    }
+                });
+                $('#' + this.id + ' form').show();
+            },
+            /**
+             * 提交过滤
+             */
+            submitFilter: function(){
+                this.data.keys = ['id','name','keyword','desc'];
+                this.data.list = [
+                    [1,'name1','kw1','desc1'],
+                    [2,'name2','kw2','desc2'],
+                    [3,'name3','kw3','desc3'],
+                ];
+                this.data.recordNum = 3;
+                this.renderTable();
+            },
+            /**
+             * 设置表头信息
+             * @param cfg
+             * [
+             *     {
+             *         key: '',//key
+             *         name: '',//列名
+             *         regex: '',//用来修正显示的正则表达式
+             *         show: 1,//是否显示
+             *     },xN
+             * ]
+             */
+            setThead: function(cfg){
+                let theadFilter,
+                    html = '';
+                Object.keys(cfg).forEach(i => {
+                    let info = cfg[i];
+                    info.regex = info.regex ? info.regex : '';
+                    info.show = info.hasOwnProperty('show') ? info.show : 1;
+                    this.data.thead[info.key] = info;
+                    let checked = info.show ? 'checked="checked"' : '';
+                    html += `<label><input type="checkbox" value="${info.key}" ${checked}>${info.name}</label>`;
+                });
+                //确定按钮
+                html += '<button class="btn btn-primary">确定</button>';
+                theadFilter = $(`<div class="container-row form-inline">${html}</div>`);
+                theadFilter.find('input').each((i, e) => {
+                    $(e).on('click', () => {
+                        this.data.thead[$(e).val()].show = $(e).prop('checked') ? 1 : 0;
+                    });
+                });
+                theadFilter.find('button').on('click', () => {this.renderTable()});
+                $('#' + this.id).append(theadFilter);
+            },
+            /**
+             * 设置表格动作
+             * @param cfg
+             * [
+             *     {
+             *         key: '',//key
+             *         name: '',//列名
+             *         class: '',//样式
+             *         click: '',//点击事件(匿名函数无法调用page的数据)
+             *     },xN
+             * ]
+             */
+            setActions: function(cfg){
+                console.log(cfg)
+                Object.keys(cfg).forEach(i => {
+                    let info = cfg[i];
+                    this.data.actions[info.key] = {
+                        name: info.name,
+                        class: info.class ? info.class : '',
+                        click: info.click ? info.click : '',
+                    };
+                });
             },
             /**
              * 渲染按钮组(页面初始化后删掉)
@@ -129,7 +232,7 @@
 			 *     {
 			 *         key: '',//表单元素的key
 			 *         name: '',//表单元素的名字
-			 *         type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
+			 *         type: '',//表单类型[select/hidden/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
 			 *         placeholder: '',//描述文字
 			 *         options: {//选项(仅select/radio/checkbox类型用到)
 			 *         		value: text, //选项值与提示文字键值对
@@ -175,11 +278,16 @@
                     info.value = info.default;
 					//写到data的表单映射
             		this.data.form[info.key] = {
+            		    type: info.type,
             			default: info.default,
 						value: info.value,
 						regex: info.regex,
 						tips: info.tips,
 					}
+					//隐藏输入框只需要记录数据，不需要创建表单元素
+					if(info.type == 'hidden'){
+					    return ;
+                    }
 					//单选和多选
 					if(['radio','checkbox'].indexOf(info.type) >= 0){
 						Object.keys(info.options).forEach(key => {
@@ -218,7 +326,7 @@
                                             </div>`;
                         }
                         html = `<div class="input-group">
-                                    <input type="text" class="form-control" name="${info.key}"
+                                    <input class="form-control" type="${info.type}" name="${info.key}"
                                     placeholder="${info.placeholder}" value="${info.value}" ${readOnly}>
                                      ${appendHtml}
                                 </div>`;
@@ -284,12 +392,12 @@
                                 '</div>' +
                             '</div>');
                 actions.find('[name=cancel]').on('click', () => {
-                    this.formCancel();
+                    this.hideForm();
                 });
                 form.append(actions);
                 form.on('submit', (e) => {
                     e.preventDefault();
-                    this.formSubmit();
+                    this.submitForm();
                 });
                 $('#' + this.id).append(form);
                 //初始化富文本
@@ -305,6 +413,207 @@
                     });
                 });
             },
+            /**
+             * 渲染过滤器(页面初始化后删掉)
+             * @param cfg
+             * [
+             *     {
+             *         key: '',//key
+             *         name: '',//名字
+             *         type: 'text',//类型[select/text/timer/bool/button]
+             *         placeholder: '',//描述文字
+             *         options: {//选项(仅select可用)
+             *         		value: text, //选项值与提示文字键值对
+             *         },
+             *         value: '',//值
+             *         regex: '',//检验值的正则表达式(空表示不校验)
+             *         tips: '',//校验不通过时的提示信息
+             *         format: '',//时间格式(仅timer类型可用)
+             *         click: 0,//点击事件(仅button类型可用)
+             *         class: '',//样式名(bool类型默认flase使用btn-default,true使用btn-success)
+             *     },xN
+             * ]
+             */
+            renderFilter: function(cfg){
+                let filter = $('<div class="container-row form-inline"></div>');
+                Object.keys(cfg).forEach(i => {
+                    let html = '',
+                        label = '',
+                        group = '',
+                        info = cfg[i];
+                    //校正参数
+                    info.name = info.hasOwnProperty('name') ? info.name : '';
+                    info.type = info.hasOwnProperty('type') ? info.type : 'text';
+                    info.placeholder = info.hasOwnProperty('placeholder') ? info.placeholder : '';
+                    info.options = info.hasOwnProperty('options') ? info.options : {};
+                    info.value = info.hasOwnProperty('value') ? info.value : '';
+                    info.regex = info.hasOwnProperty('regex') ? info.regex : '';
+                    info.tips = info.hasOwnProperty('tips') ? info.tips : '';
+                    info.format = info.hasOwnProperty('format') ? info.format : '';
+                    info.click = info.hasOwnProperty('click') ? info.click : '';
+                    info.class = info.hasOwnProperty('class') ? info.class : '';
+                    //写到data的表单映射
+                    this.data.filter[info.key] = {
+                        type: info.type,
+                        value: info.value,
+                        regex: info.regex,
+                        tips: info.tips,
+                    }
+                    //下拉选择框
+                    if(info.type == 'select'){
+                        Object.keys(info.options).forEach(key => {
+                            let selected = info.value == key ? 'selected="selected"' : '';
+                            html += `<option value="${key}" ${selected}>${info.options[key]}</option>`;
+                        });
+                        html = `<select name="${info.key}" class="form-control">${html}</select>`;
+                    }
+                    else if(['text','timer'].indexOf(info.type) >= 0){
+                        let readOnly = info.type == 'timer' ? 'readOnly=true' : '';
+                        html = `<input type="text" class="form-control" name="${info.key}"
+                                    placeholder="${info.placeholder}" value="${info.value}" ${readOnly}>`;
+                    }
+                    else{
+                        html = `<button name="${info.key}" class="btn btn-default ${info.class}">${info.name}</button>`;
+                    }
+                    if(info.name && ['bool','button'].indexOf(info.type) < 0){
+                        label = `<label>${info.name}</label>`;
+                    }
+                    group = $(`<div class="form-group">${label}${html}</div>`);
+                    //绑定事件
+                    if(info.type == 'bool'){//布朗类型
+                        group.find(`[name=${info.key}]`).on('click', e => {
+                            if(info.value){
+                                $(e.target).removeClass('btn-success');
+                            }
+                            else{
+                                $(e.target).addClass('btn-success');
+                            }
+                            info.value = info.value ? 0 : 1;
+                        });
+                    }
+                    else if(info.type == 'button'){//按钮
+                        group.find(`[name=${info.key}]`).on('click', () => this[info.click]());
+                    }
+                    else{//其他
+                        group.find(`[name=${info.key}]`).on('change', e => {
+                            this.data.filter[info.key].value = e.target.value;
+                        });
+                    }
+                    //初始化时间选择器
+                    if(info.type == 'timer'){
+                        this.timerBasicParam.minView = 2;
+                        this.timerBasicParam.format = info.format ? info.format : 'yyyy-mm-dd';
+                        if(/h/i.test(this.timerBasicParam.format)){
+                            this.timerBasicParam.minView = 1;
+                        }
+                        group.find('input').datetimepicker(this.timerBasicParam);
+                    }
+                    filter.append(group);
+                });
+                //搜索按钮
+                let submit = $('<div class="form-group">' +
+                                    '<button name="submit" class="btn btn-primary">搜索</button>' +
+                                '</div>');
+                submit.find('button').on('click', () => {this.submitFilter()});
+                filter.append(submit);
+                $('#' + this.id).append(filter);
+            },
+            /**
+             * 渲染表头过滤器
+             */
+            renderTable: function(){
+                if(!$('#' + this.id).find('table').length){
+                    $('#' + this.id).append(
+                        $('<div class="table-responsive">' +
+                                '<table class="table table-striped">' +
+                                    '<thead>' +
+                                        '<tr></tr>' +
+                                    '</thead>' +
+                                    '<tbody></tbody>' +
+                                '</table>' +
+                            '</div>'));
+                }
+                let table = $('#' + this.id).find('table');
+                let keys = [];//本次渲染时要显示的key
+                let actKeys = Object.keys(this.data.actions);
+                //thead
+                let thead = '';
+                Object.keys(this.data.thead).forEach(key => {
+                    if(this.data.thead[key].show){
+                        thead += `<th>${this.data.thead[key].name}</th>`;
+                        keys.push(key);
+                    }
+                });
+                thead += '<th>操作</th>';
+                table.find('thead tr').html(thead);
+                //tbody
+                let tbody = table.find('tbody');
+                tbody.html('');
+                Object.keys(this.data.list).forEach(i => {
+                    let tr = $('<tr></tr>');
+                    let td = $('<td></td>');
+                    //数据列
+                    keys.forEach(key => {
+                        tr.append($(`<td>${this.data.list[i][this.data.keys.indexOf(key)]}</td>`));
+                    });
+                    //操作列
+                    actKeys.forEach(key => {
+                        let act = this.data.actions[key];
+                        let btn = $(`<button name="${key}" class="btn btn-sm ${act.class}">${act.name}</button>`);
+                        //绑定事件
+                        btn.on('click', () => {
+                            this.data.listIdx = i;
+                            if(act.click){
+                                this[act.click]();
+                            }
+                        });
+                        td.append(btn);
+                    });
+                    tr.append(td);
+                    tbody.append(tr);
+                });
+                this.renderPagination();
+            },
+            /**
+             * 渲染分页器
+             */
+            renderPagination: function(){
+                let maxPage = Math.ceil(this.data.recordNum / this.data.onPageNum);
+                let html = this.getPageHtml(this.data.page, '', 'active');
+                for(let i=1; i<=this.data.pageSideNum; i++){
+                    html = this.getPageHtml(this.data.page - i) + html + this.getPageHtml(this.data.page + i);
+                }
+                if(this.data.page - this.data.pageSideNum > 1){
+                    html = this.getPageHtml(1, '...', 'disabled') + html;
+                    html = this.getPageHtml(1) + html;
+                }
+                if(this.data.page > 1){
+                    html = this.getPageHtml(this.data.page - 1, '<') + html;
+                }
+                if(this.data.page + this.data.pageSideNum < maxPage){
+                    html += this.getPageHtml(maxPage, '...', 'disabled');
+                    html += this.getPageHtml(maxPage);
+                }
+                if(this.data.page < maxPage){
+                    html += this.getPageHtml(this.data.page + 1, '>');
+                }
+                html = '<ul class="clearfix">' + html + '</ul>\n';
+                $('#' + this.id + ' table').nextAll().remove();
+                $('#' + this.id + ' table').closest('div').append($(html));
+            },
+            /**
+             * 获取页码Html
+             */
+            getPageHtml: function(page, pageText, className){
+                if(page < 1 || page > Math.ceil(this.data.recordNum / this.data.onPageNum)){
+                    return '';
+                }
+                pageText = pageText ? pageText : page;
+                className = className ? className : '';
+                return '<li class="page-item ' + className +'">' +
+                            '<a class="page-link" data-page="' + page + '" href="#">' + pageText + '</a>' +
+                        '</li>';
+            },
         },
         renderPage: function (page, config) {
             if (!this.pages.hasOwnProperty(page)) {
@@ -312,13 +621,25 @@
                 this.pages[page] = Object.assign({}, this.page);
                 this.pages[page].id = page;
             }
-            if (config.btnGroups) {
-                this.pages[page].renderBtnGroup(config.btnGroups);
-                delete config.btnGroups;
+            if (config.buttons) {
+                this.pages[page].renderBtnGroup(config.buttons);
+                delete config.buttons;
             }
             if (config.form){
                 this.pages[page].renderForm(config.form);
                 delete config.form;
+            }
+            if (config.filter){
+                this.pages[page].renderFilter(config.filter);
+                delete config.filter;
+            }
+            if (config.thead){
+                this.pages[page].setThead(config.thead);
+                delete config.thead;
+            }
+            if (config.actions){
+                this.pages[page].setActions(config.actions);
+                delete config.actions;
             }
             Object.keys(config).forEach(key => {
                 this.pages[page].on(key, config[key]);
@@ -333,39 +654,60 @@
         // 	},
         // });
         App.renderPage('bpage', {
-            btnGroups: [
+            buttons: [
                 {
                     name: '新增',
                     class: 'btn-primary',
                     click: 'addNew',
                 }
             ],
+            actions: [
+                {
+                    key: 'edit',
+                    name: '修改',
+                    class: 'btn-primary',
+                    click: 'editData',
+                }
+            ],
+            editData: function() {
+                console.log(this.data.listIdx)
+            },
             addNew: function () {
                 console.log(this.id)
                 $('#'+this.id).find('form').show();
             },
-        	form: [
+            filter: [
+                {
+                    key: 'sid',
+                    type: 'hidden',
+                    default: 1,
+                },
                 {
                     key: 'sitename',
                     name: '站点名称',
-                    type: 'timer',
-                    placeholder: '请输入站点名称',
+                    type: 'text',
                     default: '',
                     column: 4,
                 },
+            ],
+            thead:[
                 {
-                    key: 'sitecontent',
-                    name: '站点内容',
-                    type: 'checkbox',
-                    options: {
-                        0: '个人',
-                        1: '企业',
-                        2: '政府',
-                        3: '公益'
-                    },
-                    default: 0,
+                    key: 'id',
+                    name: 'ID',
                 },
-        	],
+                {
+                    key: 'name',
+                    name: '名称',
+                },
+                {
+                    key: 'keyword',
+                    name: '关键词',
+                },
+                {
+                    key: 'desc',
+                    name: '描述',
+                },
+            ],
         });
     })
 
