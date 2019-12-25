@@ -29,6 +29,9 @@ body{
 	margin: 0;
 	padding: 0 4px 4px 0;
 }
+.container-row.form-inline label{
+	padding-right: 4px;
+}
 .container-row .table button{
 	margin: 0 2px 1px 0;
 }

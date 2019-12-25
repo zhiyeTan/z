@@ -4,10 +4,10 @@ const App = {
 	// logoutApi: '/4cm/logout',
 	// permissionApi: '/4cm/permission',
 	// pageConfigDomain: 'http://s.4cm.com/',//页面配置的域名
+	pages: {},
 	init: function(param){
-		let self = this;
-		Object.keys(param).forEach(function(key){
-			self[key] = param[key];
+		Object.keys(param).forEach(key => {
+			this[key] = param[key];
 		});
 		Backdrop.init().showLoading();
 		Dialog.init();
@@ -36,18 +36,18 @@ const App = {
 						'</div>');
 		$('#loginBox').css('margin-top', (document.documentElement.clientHeight / 2 - 150) + 'px');
 		//绑定异步提交登录
-		let self = this;
-		$('#loginBox').on('submit', function(){
+		$('#loginBox').on('submit', e => {
+			e.preventDefault();
 			let account = $('#loginBox [name=account]').val();
 			let pwd = $('#loginBox [name=password]').val();
 			Backdrop.showLoading();
 			$.post(
-				self.loginApi,
+				this.loginApi,
 				{
 					account: account,
 					password: pwd
 				},
-				function(res){
+				res => {
 					Backdrop.hideLoading();
 					if(res.errno){
 						$('.alert').html(res.message).removeClass('d-none');
@@ -60,11 +60,10 @@ const App = {
 						});
 					}
 					else{
-						self.initSidebar();
+						this.initSidebar();
 					}
 				}
 			);
-			return false;
 		});
 	},
 	/**
@@ -85,13 +84,12 @@ const App = {
 	 * 初始化侧边栏
 	 */
 	initSidebar: function(){
-		let self = this;
 		$.get(
-			self.permissionApi,
-			function(res){
+			this.permissionApi,
+			res => {
 				if(res.errno){
 					if(res.overdue){
-						self.showLoginBox();
+						this.showLoginBox();
 					}
 					else{
 						Dialog.show({
@@ -130,12 +128,10 @@ const App = {
 						}
 					});
 					//绑定注销事件
-					$('#logout').on('click', function(){
+					$('#logout').on('click', () => {
 						$.get(
-							self.logoutApi,
-							function(){
-								self.showLoginBox();
-							}
+							this.logoutApi,
+							() => {this.showLoginBox()}
 						);
 					});
 					//权限列表
@@ -181,44 +177,52 @@ const App = {
 						}
 					});
 					//绑定二级导航点击事件
-					$('#sidebarContent').on('click', '.nav-business-item', function(){
-						let mod = $(this).attr('mod');
-						let biz = $(this).attr('biz');
+					$('#sidebarContent').on('click', '.nav-business-item', e => {
+						let mod = $(e.target).attr('mod');
+						let biz = $(e.target).attr('biz');
 						let pkey = `${mod}_${biz}`;
 						//已经加载过页面配置
-						if($('#'+pkey).length){
+						if(this.pages.hasOwnProperty(pkey)){
 							$('#'+pkey).show().siblings().hide();
 						}
 						else{//未加载过
 							Backdrop.showLoading();
+							console.log(`${this.pageConfigDomain}/app/${this.appName}/page/${mod}/${biz}/script.js`)
 							$.get(
-								`${self.pageConfigDomain}/app/${self.appName}/page/${mod}/${biz}/script.js`,
-								function(cfg){
+								`${this.pageConfigDomain}/app/${this.appName}/page/${mod}/${biz}/script.js`,
+								cfg => {
 									eval(`config = ` + cfg);
 									$('#container').append(`<div id="${pkey}"></div>`);
-									Object.keys(config).forEach(function(key){
-										let cfg = config[key];
-										let ckey = pkey + '_' + key;
-										$('#'+pkey).append(`<div id="${ckey}" class="container-row"></div>`);
-										switch(key.toLowerCase()){
-											case 'form':
-												cfg.id = ckey;
-												Form.init(cfg);
-												break;
-											case 'filter':
-												cfg.id = ckey;
-												Filter.init(cfg);
-												break;
-											case 'pagination':
-												cfg.id = ckey;
-												Pagination.init(cfg);
-												break;
-											case 'table':
-												cfg.id = ckey;
-												Table.init(cfg);
-												break;
-										}
+									this.pages[pkey] = Object.assign({}, this.page);
+									this.pages[pkey].id = pkey;
+									if (config.buttons) {
+										this.pages[pkey].renderBtnGroup(config.buttons);
+										delete config.buttons;
+									}
+									if (config.form){
+										this.pages[pkey].renderForm(config.form);
+										delete config.form;
+									}
+									if (config.filter){
+										this.pages[pkey].renderFilter(config.filter);
+										delete config.filter;
+									}
+									if (config.thead){
+										this.pages[pkey].setThead(config.thead);
+										delete config.thead;
+									}
+									if (config.actions){
+										this.pages[pkey].setActions(config.actions);
+										delete config.actions;
+									}
+									if (config.autoLoad){
+										this.pages[pkey].submitFilter();
+										delete config.autoLoad;
+									}
+									Object.keys(config).forEach(key => {
+										this.pages[pkey].on(key, config[key]);
 									});
+									this.pages[pkey].clean();
 									$('#'+pkey).show().siblings().hide();
 									Backdrop.hideLoading();
 								}
@@ -248,8 +252,622 @@ const App = {
 	 * 页面对象(基本包含按钮组、表单、筛选器、表格、分页器)
 	 */
 	page: {
-
-	}
+		id: '',//页面ID
+		formApiUrl: '',//表单接口
+		dataApiUrl: '',//数据接口
+		data: {
+			page: 1,//当前页码
+			onPageNum: 1,//每页记录数
+			recordNum: 0,//总记录数
+			pageSideNum: 2,//两侧显示的页码数量
+			keys: [],//键名数组，键名索引和数据索引保持一致
+			list: [],//列表数据
+			thead: [],//表头信息
+			listIdx: -1,//选定列对应的索引
+			form: {},//表单信息
+			filter: {},//过滤器信息
+			actions: [],//表格操作
+		},
+		timerBasicParam: {//时间选择器基本参数(页面初始化后删掉)
+			language: 'zh-CN',
+			weekStart: 1,
+			todayBtn: 1,
+			todayHighlight: 1,
+			autoclose: 1,
+			maxView: 4,
+			startView: 2,
+			// format: 'yyyy-mm-dd',
+			// minView: 1,
+		},
+		//检查是否保留关键字
+		checkReservedKeywords: function(key){
+			return ['id', 'formApiUrl', 'dataApiUrl', 'data', 'on', 'off', 'clean'].indexOf(key) >= 0;
+		},
+		//设置属性
+		on: function (key, value) {
+			if (!this.checkReservedKeywords(key)) {
+				if (this.hasOwnProperty(key) && typeof (this[key]) === 'function') {
+					let mapKey = `${key}_${parseInt(key, 32)}`;
+					if (!this.hasOwnProperty(mapKey)) {
+						this[mapKey] = [];
+						this[mapKey].push(this[key]);
+					}
+					this[mapKey].push(value);
+					this[key] = () => {
+						Object.keys(this[mapKey]).forEach(i => {
+							this[mapKey][i]();
+						})
+					}
+				} else {
+					this[key] = value;
+				}
+			}
+		},
+		//移除属性
+		off: function(key){
+			if (!this.checkReservedKeywords(key)) {
+				delete this[key];
+				delete this[`${key}_${parseInt(key, 32)}`];
+			}
+		},
+		//创建页面后清除无用属性
+		clean: function () {
+			delete this.timerBasicParam;
+			delete this.renderBtnGroup;
+			delete this.renderForm;
+			delete this.renderFilter;
+			delete this.setThead;
+			delete this.setActions;
+		},
+		/**
+		 * 显示表单
+		 */
+		showForm: function(data){
+			Object.keys(this.data.form).forEach(key => {
+				let info = this.data.form[key],
+					newVal = data.hasOwnProperty(key) ? data[key] : info.default,
+					target = $('#' + this.id + 'form [name=' + key + ']');
+				//多选项
+				if(info.type == 'checkbox'){
+					this.data.form[key].value = [].concat(newVal);
+					target.removeAttribute('checked');
+					this.data.form[key].value.forEach(val => {
+						$('#' + this.id + 'form [name=' + key + '][value=' + val + ']').prop('checked', true);
+					});
+				}
+				//富文本
+				else if(info.type == 'html'){
+					target.summernote('code', newVal);
+				}
+				else{
+					this.data.form[key].value = newVal;
+					target.val(newVal);
+				}
+			});
+			$('#' + this.id + ' form').show();
+		},
+		/**
+		 * 隐藏表单
+		 */
+		hideForm: function(){
+			$('#' + this.id + ' form').hide();
+		},
+		/**
+		 * 提交表单
+		 */
+		submitForm: function(){
+			let postData = {};
+			Object.keys(this.data.form).forEach(key => {
+				if(this.data.form[key].regex){
+					if(this.data.form[key].value.replace(this.data.form[key].regex, '') !== ''){
+						Dialog.show({
+							message: this.data.form[key].tips,
+						});
+					}
+				}
+				postData[key] = this.data.form[key].value;
+			});
+			$.post(
+				this.formApiUrl,
+				postData,
+				result => {
+					this.hideForm();
+				},
+				err => {
+					Dialog.show({
+						message: err.message,
+					});
+				}
+			);
+		},
+		/**
+		 * 提交过滤
+		 */
+		submitFilter: function(){
+			let url = this.dataApiUrl;
+			Object.keys(this.data.filter).forEach(key => {
+				url += '/' + key + '/' + this.data.filter[key].value;
+			});
+			url += '/page/' + this.data.page;
+			console.log(url)
+			$.get(
+				url,
+				result => {
+					this.data.keys = result.keys;
+					this.data.list = result.data;
+					this.data.recordNum = result.count ? result.count : result.data.length;
+					this.renderTable();
+				},
+				err => {
+					Dialog.show({
+						message: err.message,
+					});
+				}
+			)
+		},
+		/**
+		 * 设置表头信息
+		 * @param cfg
+		 * [
+		 *     {
+		 *         key: '',//key
+		 *         name: '',//列名
+		 *         regex: '',//用来修正显示的正则表达式
+		 *         show: 1,//是否显示
+		 *     },xN
+		 * ]
+		 */
+		setThead: function(cfg){
+			let theadFilter,
+				html = '';
+			Object.keys(cfg).forEach(i => {
+				let info = cfg[i];
+				info.regex = info.regex ? info.regex : '';
+				info.show = info.hasOwnProperty('show') ? info.show : 1;
+				this.data.thead[info.key] = info;
+				let checked = info.show ? 'checked="checked"' : '';
+				html += `<label><input type="checkbox" value="${info.key}" ${checked}>${info.name}</label>`;
+			});
+			//确定按钮
+			html += '<div class="form-group"><button class="btn btn-primary">确定</button></div>';
+			theadFilter = $(`<div class="container-row form-inline">${html}</div>`);
+			theadFilter.find('input').each((i, e) => {
+				$(e).on('click', () => {
+					this.data.thead[$(e).val()].show = $(e).prop('checked') ? 1 : 0;
+				});
+			});
+			theadFilter.find('button').on('click', () => {this.renderTable()});
+			$('#' + this.id).append(theadFilter);
+		},
+		/**
+		 * 设置表格动作
+		 * @param cfg
+		 * [
+		 *     {
+		 *         key: '',//key
+		 *         name: '',//列名
+		 *         class: '',//样式
+		 *         click: '',//点击事件(匿名函数无法调用page的数据)
+		 *     },xN
+		 * ]
+		 */
+		setActions: function(cfg){
+			Object.keys(cfg).forEach(i => {
+				let info = cfg[i];
+				this.data.actions[info.key] = {
+					name: info.name,
+					class: info.class ? info.class : '',
+					click: info.click ? info.click : '',
+				};
+			});
+		},
+		/**
+		 * 渲染按钮组(页面初始化后删掉)
+		 * @param cfg
+		 * [
+		 *     {
+		 *         name: '',//名称
+		 *         class: '',//样式
+		 *         click: '',//点击事件(匿名函数无法调用page的数据)
+		 *     },xN
+		 * ]
+		 */
+		renderBtnGroup: function (cfg) {
+			let group = $('<div class="container-row"></div>');
+			Object.keys(cfg).forEach(i => {
+				let btn = $(`<button class="btn btn-default ${cfg[i].class}">${cfg[i].name}</button>`);
+				if (cfg[i].click) {
+					btn.on('click', () => this[cfg[i].click]());
+				}
+				group.append(btn);
+			});
+			$('#' + this.id).append(group);
+		},
+		/**
+		 * 渲染表单(页面初始化后删掉)
+		 * @param cfg
+		 * [
+		 *     {
+		 *         key: '',//表单元素的key
+		 *         name: '',//表单元素的名字
+		 *         type: '',//表单类型[select/hidden/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
+		 *         placeholder: '',//描述文字
+		 *         options: {//选项(仅select/radio/checkbox类型用到)
+		 *         		value: text, //选项值与提示文字键值对
+		 *         },
+		 *         unit: '',//单位描述(空表示没有单位)
+		 *         value: '',//值(checkbox/files类型为数组)
+		 *         default: '',//默认值(checkbox/files类型为数组)
+		 *         regex: '',//检验值的正则表达式(空表示不校验)
+		 *         tips: '',//校验不通过时的提示信息
+		 *         format: '',//时间格式(仅timer类型用到)
+		 *         column: 0,//所占列数(一行12列)
+		 *     },xN
+		 * ]
+		 */
+		renderForm: function (cfg) {
+			let form = $('<form class="container-row"></form>');
+			let colNumOnRow = 0;//一行的列数
+			let lastIdx = cfg.length - 1;//最后一个配置的索引
+			let rowBox = $('<div class="row"></div>');
+			Object.keys(cfg).forEach(i => {
+				let colBox,
+					html = '',
+					info = cfg[i];
+				//校正参数
+				info.name = info.hasOwnProperty('name') ? info.name : '';
+				info.type = info.hasOwnProperty('type') ? info.type : 'text';
+				info.placeholder = info.hasOwnProperty('placeholder') ? info.placeholder : '';
+				info.options = info.hasOwnProperty('options') ? info.options : {};
+				info.unit = info.hasOwnProperty('unit') ? info.unit : '';
+				info.default = info.hasOwnProperty('default') ? info.default : '';
+				info.regex = info.hasOwnProperty('regex') ? info.regex : '';
+				info.tips = info.hasOwnProperty('tips') ? info.tips : '';
+				info.format = info.hasOwnProperty('format') ? info.format : '';
+				info.column = info.hasOwnProperty('column') ? info.column : 12;
+				if(info.type == 'checkbox' && !Array.isArray(info.default)){
+					if(info.default !== ''){
+						info.default = [info.default.toString()];
+					}
+					else{
+						info.default = [];
+					}
+				}
+				info.value = info.default;
+				//写到data的表单映射
+				this.data.form[info.key] = {
+					type: info.type,
+					default: info.default,
+					value: info.value,
+					regex: info.regex,
+					tips: info.tips,
+				}
+				console.log(info.type)
+				//隐藏输入框只需要记录数据，不需要创建表单元素
+				if(info.type == 'hidden'){
+					return ;
+				}
+				//单选和多选
+				if(['radio','checkbox'].indexOf(info.type) >= 0){
+					Object.keys(info.options).forEach(key => {
+						let checked = '';
+						if((info.type == 'radio' && info.default == key)
+							|| (info.type == 'checkbox' && info.default.indexOf(key) >= 0)){
+							checked = 'checked="checked"';
+						}
+						html += `<label>
+                                    <input type="${info.type}" name="${info.key}" value="${key}" ${checked}>
+                                    ${info.options[key]}
+                                    </label>`;
+					});
+					html = `<div class="form-multiselect-row">${html}</div>`;
+				}
+				//文本框和富文本
+				else if(['textarea','html'].indexOf(info.type) >= 0){
+					let sign = info.type == 'html' ? 'editor="1"' : '';
+					html = `<textarea name="${info.key}" class="form-control" placeholder="${info.placeholder}" ${sign}>${info.value}</textarea>`;
+				}
+				//下拉选择框
+				else if(info.type == 'select'){
+					Object.keys(info.options).forEach(key => {
+						let selected = info.default == key ? 'selected="selected"' : '';
+						html += `<option value="${key}" ${selected}>${info.options[key]}</option>`;
+					});
+					html = `<select name="${info.key}" class="form-control">${html}</select>`;
+				}
+				//input输入框
+				else{
+					let appendHtml = '',
+						readOnly = info.type == 'timer' ? 'readOnly=true' : '';
+					if(info.unit){
+						appendHtml = `<div class="input-group-append">
+                                                <span class="input-group-text">${info.unit}</span>
+                                            </div>`;
+					}
+					html = `<div class="input-group">
+                                    <input class="form-control" type="${info.type}" name="${info.key}"
+                                    placeholder="${info.placeholder}" value="${info.value}" ${readOnly}>
+                                     ${appendHtml}
+                                </div>`;
+				}
+				//创建列对象
+				let colNum = info.column > 0 ? info.column : 12;
+				colBox = $(`<div class="col-sm-${colNum}">
+                                    <label>${info.name}</label>
+                                    ${html}
+                                </div>`);
+				//绑定表单元素的change事件
+				colBox.find(`[name=${info.key}]`).each((j, e) => {
+					$(e).on('change', () => {
+						let value = $(e).val();
+						if(info.type == 'checkbox'){
+							if($(e).prop('checked')){
+								this.data.form[info.key].value.push(value);
+							}
+							else{
+								this.data.form[info.key].value.splice(
+									this.data.form[info.key].value.indexOf(value), 1);
+							}
+						}
+						else{
+							this.data.form[info.key].value = value;
+						}
+					})
+				});
+				//初始化时间选择器
+				if(info.type == 'timer'){
+					this.timerBasicParam.minView = 2;
+					this.timerBasicParam.format = info.format ? info.format : 'yyyy-mm-dd';
+					if(/h/i.test(this.timerBasicParam.format)){
+						this.timerBasicParam.minView = 1;
+					}
+					colBox.find('input').datetimepicker(this.timerBasicParam);
+				}
+				//看一下应该放到哪一行
+				colNumOnRow += colNum;
+				if(colNumOnRow <= 12){
+					rowBox.append(colBox);
+				}
+				if(colNumOnRow >= 12 || i == lastIdx){
+					form.append(rowBox);
+					rowBox = $('<div class="row"></div>');
+					if(colNumOnRow > 12){
+						rowBox.append(colBox);
+						colNumOnRow = colNum;
+					}
+					else{
+						colNumOnRow = 0;
+					}
+				}
+				if(colNumOnRow >= 12 && i == lastIdx){
+					form.append(rowBox);
+				}
+			});
+			//提交和取消按钮
+			let actions = $('<div class="row">' +
+				'<div class="col-12">' +
+				'<button name="submit" class="btn btn-success">提交</button>' +
+				'<button name="cancel" class="btn btn-default">取消</button>' +
+				'</div>' +
+				'</div>');
+			actions.find('[name=cancel]').on('click', () => {
+				this.hideForm();
+			});
+			form.append(actions);
+			form.on('submit', (e) => {
+				e.preventDefault();
+				this.submitForm();
+			});
+			$('#' + this.id).append(form);
+			//初始化富文本
+			$('#' + this.id).find('[editor=1]').each((i, e) => {
+				$(e).summernote({
+					lang: 'zh-CN',
+					height: 150,
+					callbacks: {
+						onChange: (contents) => {
+							this.data.form[$(e).attr('name')].value = contents;
+						}
+					}
+				});
+			});
+		},
+		/**
+		 * 渲染过滤器(页面初始化后删掉)
+		 * @param cfg
+		 * [
+		 *     {
+		 *         key: '',//key
+		 *         name: '',//名字
+		 *         type: 'text',//类型[select/text/timer/bool/button]
+		 *         placeholder: '',//描述文字
+		 *         options: {//选项(仅select可用)
+		 *         		value: text, //选项值与提示文字键值对
+		 *         },
+		 *         value: '',//值
+		 *         format: '',//时间格式(仅timer类型可用)
+		 *         click: 0,//点击事件(仅button类型可用)
+		 *         class: '',//样式名(bool类型默认flase使用btn-default,true使用btn-success)
+		 *     },xN
+		 * ]
+		 */
+		renderFilter: function(cfg){
+			let filter = $('<div class="container-row form-inline"></div>');
+			Object.keys(cfg).forEach(i => {
+				let html = '',
+					label = '',
+					group = '',
+					info = cfg[i];
+				//校正参数
+				info.name = info.hasOwnProperty('name') ? info.name : '';
+				info.type = info.hasOwnProperty('type') ? info.type : 'text';
+				info.placeholder = info.hasOwnProperty('placeholder') ? info.placeholder : '';
+				info.options = info.hasOwnProperty('options') ? info.options : {};
+				info.value = info.hasOwnProperty('value') ? info.value : '';
+				info.format = info.hasOwnProperty('format') ? info.format : '';
+				info.click = info.hasOwnProperty('click') ? info.click : '';
+				info.class = info.hasOwnProperty('class') ? info.class : '';
+				//写到data的表单映射
+				this.data.filter[info.key] = {
+					type: info.type,
+					value: info.value,
+				}
+				//下拉选择框
+				if(info.type == 'select'){
+					Object.keys(info.options).forEach(key => {
+						let selected = info.value == key ? 'selected="selected"' : '';
+						html += `<option value="${key}" ${selected}>${info.options[key]}</option>`;
+					});
+					html = `<select name="${info.key}" class="form-control">${html}</select>`;
+				}
+				else if(['text','timer'].indexOf(info.type) >= 0){
+					let readOnly = info.type == 'timer' ? 'readOnly=true' : '';
+					html = `<input type="text" class="form-control" name="${info.key}"
+                                    placeholder="${info.placeholder}" value="${info.value}" ${readOnly}>`;
+				}
+				else{
+					html = `<button name="${info.key}" class="btn btn-default ${info.class}">${info.name}</button>`;
+				}
+				if(info.name && ['bool','button'].indexOf(info.type) < 0){
+					label = `<label>${info.name}</label>`;
+				}
+				group = $(`<div class="form-group">${label}${html}</div>`);
+				//绑定事件
+				if(info.type == 'bool'){//布朗类型
+					group.find(`[name=${info.key}]`).on('click', e => {
+						if(info.value){
+							$(e.target).removeClass('btn-success');
+						}
+						else{
+							$(e.target).addClass('btn-success');
+						}
+						info.value = info.value ? 0 : 1;
+					});
+				}
+				else if(info.type == 'button'){//按钮
+					group.find(`[name=${info.key}]`).on('click', () => this[info.click]());
+				}
+				else{//其他
+					group.find(`[name=${info.key}]`).on('change', e => {
+						this.data.filter[info.key].value = e.target.value;
+					});
+				}
+				//初始化时间选择器
+				if(info.type == 'timer'){
+					this.timerBasicParam.minView = 2;
+					this.timerBasicParam.format = info.format ? info.format : 'yyyy-mm-dd';
+					if(/h/i.test(this.timerBasicParam.format)){
+						this.timerBasicParam.minView = 1;
+					}
+					group.find('input').datetimepicker(this.timerBasicParam);
+				}
+				filter.append(group);
+			});
+			//搜索按钮
+			let submit = $('<div class="form-group">' +
+				'<button name="submit" class="btn btn-primary">搜索</button>' +
+				'</div>');
+			submit.find('button').on('click', () => {this.submitFilter()});
+			filter.append(submit);
+			$('#' + this.id).append(filter);
+		},
+		/**
+		 * 渲染表头过滤器
+		 */
+		renderTable: function(){
+			if(!$('#' + this.id).find('table').length){
+				$('#' + this.id).append(
+					$('<div class="table-responsive">' +
+						'<table class="table table-striped">' +
+						'<thead>' +
+						'<tr></tr>' +
+						'</thead>' +
+						'<tbody></tbody>' +
+						'</table>' +
+						'</div>'));
+			}
+			let table = $('#' + this.id).find('table');
+			let keys = [];//本次渲染时要显示的key
+			let actKeys = Object.keys(this.data.actions);
+			//thead
+			let thead = '';
+			Object.keys(this.data.thead).forEach(key => {
+				if(this.data.thead[key].show){
+					thead += `<th>${this.data.thead[key].name}</th>`;
+					keys.push(key);
+				}
+			});
+			thead += '<th>操作</th>';
+			table.find('thead tr').html(thead);
+			//tbody
+			let tbody = table.find('tbody');
+			tbody.html('');
+			Object.keys(this.data.list).forEach(i => {
+				let tr = $('<tr></tr>');
+				let td = $('<td></td>');
+				//数据列
+				keys.forEach(key => {
+					tr.append($(`<td>${this.data.list[i][this.data.keys.indexOf(key)]}</td>`));
+				});
+				//操作列
+				actKeys.forEach(key => {
+					let act = this.data.actions[key];
+					let btn = $(`<button name="${key}" class="btn btn-sm ${act.class}">${act.name}</button>`);
+					//绑定事件
+					btn.on('click', () => {
+						this.data.listIdx = i;
+						if(act.click){
+							this[act.click]();
+						}
+					});
+					td.append(btn);
+				});
+				tr.append(td);
+				tbody.append(tr);
+			});
+			this.renderPagination();
+		},
+		/**
+		 * 渲染分页器
+		 */
+		renderPagination: function(){
+			let maxPage = Math.ceil(this.data.recordNum / this.data.onPageNum);
+			let html = this.getPageHtml(this.data.page, '', 'active');
+			for(let i=1; i<=this.data.pageSideNum; i++){
+				html = this.getPageHtml(this.data.page - i) + html + this.getPageHtml(this.data.page + i);
+			}
+			if(this.data.page - this.data.pageSideNum > 1){
+				html = this.getPageHtml(1, '...', 'disabled') + html;
+				html = this.getPageHtml(1) + html;
+			}
+			if(this.data.page > 1){
+				html = this.getPageHtml(this.data.page - 1, '<') + html;
+			}
+			if(this.data.page + this.data.pageSideNum < maxPage){
+				html += this.getPageHtml(maxPage, '...', 'disabled');
+				html += this.getPageHtml(maxPage);
+			}
+			if(this.data.page < maxPage){
+				html += this.getPageHtml(this.data.page + 1, '>');
+			}
+			html = '<ul class="clearfix">' + html + '</ul>\n';
+			$('#' + this.id + ' table').nextAll().remove();
+			$('#' + this.id + ' table').closest('div').append($(html));
+		},
+		/**
+		 * 获取页码Html
+		 */
+		getPageHtml: function(page, pageText, className){
+			if(page < 1 || page > Math.ceil(this.data.recordNum / this.data.onPageNum)){
+				return '';
+			}
+			pageText = pageText ? pageText : page;
+			className = className ? className : '';
+			return '<li class="page-item ' + className +'">' +
+				'<a class="page-link" data-page="' + page + '" href="#">' + pageText + '</a>' +
+				'</li>';
+		},
+	},
 };
 /**
  * 侧边栏
@@ -500,674 +1118,4 @@ const Dialog = {
 	},
 }
 
-/**
- * 基于bootstrap4的筛选器组件
- */
-const Filter = {
-	id: '',//筛选器ID
-	apiUrl: '',//数据接口
-	elements: {//过滤器表单元素(键名和表单元素ID一一对应)
-		// elementName: {
-		//     name: '',//表单元素的标题
-		//     type: 'text',//表单类型[select/text/timer/button]
-		//     placeholder: '',//描述文字
-		//     options: {//选项(仅select类型用到)
-		//         value: text,//选项值与提示文字键值对
-		//     },
-		//     value: '',//值(checkbox/files类型为数组)
-		//     regex: '',//检验值的正则表达式(空表示不校验)
-		//     tips: '',//校验不通过时的提示信息
-		//     className: '',//样式名(仅button类型可用)
-		//	   click: '',//点击事件(仅button类型可用)
-		//     format: '',//时间格式(仅timer类型可用)
-		// },
-	},
-	baseTimerParam: {//基本的时间选择器参数(基本不需要改变)
-		language:  'zh-CN',
-		weekStart: 1,
-		todayBtn:  1,
-		todayHighlight: 1,
-		autoclose: 1,
-		maxView: 4,
-		startView: 2,
-		// format: 'yyyy-mm-dd',
-		// minView: 1,
-	},
-	/**
-	 * 初始化表单对象
-	 */
-	init: function(param){
-		let self = this;
-		this.apiUrl = param.apiUrl;
-		this.id = param.id;
-		if(param.elements){
-			Object.keys(param.elements).forEach(function(key){
-				self.elements[key] = {
-					name: param.elements[key].hasOwnProperty('name') ? param.elements[key].name : '',
-					type: param.elements[key].hasOwnProperty('type') ? param.elements[key].type : 'text',
-					placeholder: param.elements[key].hasOwnProperty('placeholder') ? param.elements[key].placeholder : '',
-					options: param.elements[key].hasOwnProperty('options') ? param.elements[key].options : [],
-					value: param.elements[key].hasOwnProperty('value') ? param.elements[key].value : '',
-					regex: param.elements[key].hasOwnProperty('regex') ? param.elements[key].regex : '',
-					tips: param.elements[key].hasOwnProperty('tips') ? param.elements[key].tips : '',
-					className: param.elements[key].hasOwnProperty('className') ? param.elements[key].className : '',
-					click: param.elements[key].hasOwnProperty('click') ? param.elements[key].click : '',
-					format: param.elements[key].hasOwnProperty('format') ? param.elements[key].format : '',
-				}
-			});
-		}
-		//自动加一个搜索按钮进去
-		this.searchBtnName = 'searchBtn';
-		this.elements[this.searchBtnName] = {
-			name: '',
-			type: 'button',
-			placeholder: '',
-			options: [],
-			value: '搜索',
-			regex: '',
-			tips: '',
-			className: 'btn-primary',
-			click: this.search
-		}
-		this.create();
-	},
-	/**
-	 * 创建过滤器
-	 */
-	create: function(){
-		let self = this;
-		$('#'+this.id).html('');
-		if(!$('#'+this.id).hasClass('form-inline')){
-			$('#'+this.id).addClass('form-inline');
-		}
-		//表单元素
-		Object.keys(this.elements).forEach(function(key){
-			let info = self.elements[key];
-			if(info.name){
-				let label = document.createElement('label');
-				label.innerHTML = info.name;
-				$('#'+self.id).append(label);
-			}
-			let groupObj = document.createElement('div');
-			groupObj.className = 'form-group';
-			if(info.type == 'select'){//下拉框
-				let eleObj = document.createElement('select');
-				eleObj.name = key;
-				eleObj.className = 'form-control';
-				Object.keys(info.options).forEach(function(optKey){
-					let option = document.createElement('option');
-					option.value = optKey;
-					option.innerHTML = info.options[optKey];
-					if(info.value === optKey){
-						option.selected = true;
-					}
-					eleObj.append(option);
-				});
-				groupObj.append(eleObj);
-			}
-			//文本框和时间选择器都用input
-			else if(['text','timer'].indexOf(info.type) >= 0){
-				let eleObj = document.createElement('input');
-				eleObj.name = key;
-				eleObj.type = 'text';
-				eleObj.className = 'form-control';
-				eleObj.value = info.value;
-				eleObj.placeholder = info.placeholder;
-				if(info.type == 'timer'){
-					eleObj.readOnly = true;
-				}
-				groupObj.append(eleObj);
-			}
-			else if(info.type == 'button'){
-				let eleObj = document.createElement('button');
-				eleObj.name = key;
-				eleObj.className = 'btn btn-default ' + info.className;
-				eleObj.innerHTML = info.value;
-				groupObj.append(eleObj);
-				//绑定点击事件
-				if(info.click){
-					$('#'+self.id).on('click', '[name='+key+']', function(){
-						if(key == self.searchBtnName){
-							self.search();
-						}
-						else{
-							info.click();
-						}
-					});
-				}
-			}
-			$('#'+self.id).append(groupObj);
-			//绑定表单change事件
-			$('#'+self.id).on('change', '[name='+key+']', function(){
-				self.elements[key].value = $(this).val();
-			});
-			//时间选择器要绑一下控件
-			if(info.type == 'timer'){
-				self.baseTimerParam.minView = 2;
-				self.baseTimerParam.format = info.format ? info.format : 'yyyy-mm-dd';
-				if(/h/i.test(self.baseTimerParam.format)){
-					self.baseTimerParam.minView = 1;
-				}
-				$('[name='+key+']').datetimepicker(self.baseTimerParam);
-			}
-		});
-	},
-	search: function(){
-		let self = this;
-		let formData = {};
-		Object.keys(this.elements).forEach(function(key){
-			formData[key] = self.elements[key].value;
-		})
-		console.log(formData)
-	}
-}
-
-/**
- * 基于bootstrap4的表单组件
- * TODO 待补充files相关功能(独立做一个上传功能，表单这里不提供上传功能，只能选择已上传的图片)
- */
-const Form = {
-	id: '',//表单ID
-	apiUrl: '',//保存数据接口
-	elements:{//表单元素(键名和表单元素ID一一对应)
-		// elementName: {
-		//     name: '',//表单元素的名字
-		//     type: 'text',//表单类型[select/text/textarea/password/radio/checkbox/number/tel/timer/html/files]
-		//     placeholder: '',//描述文字
-		//     options: {//选项(仅select/radio/checkbox类型用到)
-		//         // value: text,//选项值与提示文字键值对
-		//     },
-		//     unit: '',//单位描述(空表示没有单位)
-		//     value: '',//值(checkbox/files类型为数组)
-		//     default: '',//默认值(checkbox/files类型为数组)
-		//     regex: '',//检验值的正则表达式(空表示不校验)
-		//     tips: '',//校验不通过时的提示信息
-		//     format: '',//时间格式(仅timer类型用到)
-		//     column: 0,//所占列数(一行12列)
-		// },
-	},
-	baseTimerParam: {//基本的时间选择器参数(基本不需要改变)
-		language:  'zh-CN',
-		weekStart: 1,
-		todayBtn:  1,
-		todayHighlight: 1,
-		autoclose: 1,
-		maxView: 4,
-		startView: 2,
-		// format: 'yyyy-mm-dd',
-		// minView: 1,
-	},
-	/**
-	 * 初始化表单对象
-	 */
-	init: function(param){
-		let self = this;
-		this.apiUrl = param.apiUrl;
-		this.id = param.id;
-		if(param.elements){
-			Object.keys(param.elements).forEach(function(key){
-				self.elements[key] = {
-					name: param.elements[key].hasOwnProperty('name') ? param.elements[key].name : '',
-					type: param.elements[key].hasOwnProperty('type') ? param.elements[key].type : 'text',
-					placeholder: param.elements[key].hasOwnProperty('placeholder') ? param.elements[key].placeholder : '',
-					options: param.elements[key].hasOwnProperty('options') ? param.elements[key].options : [],
-					unit: param.elements[key].hasOwnProperty('unit') ? param.elements[key].unit : '',
-					//value: param.elements[key].hasOwnProperty('value') ? param.elements[key].value : '',
-					default: param.elements[key].hasOwnProperty('default') ? param.elements[key].default : '',
-					regex: param.elements[key].hasOwnProperty('regex') ? param.elements[key].regex : '',
-					tips: param.elements[key].hasOwnProperty('tips') ? param.elements[key].tips : '',
-					format: param.elements[key].hasOwnProperty('format') ? param.elements[key].format : '',
-					column: param.elements[key].hasOwnProperty('column') ? param.elements[key].column : 0,
-				}
-				//多选项的值和默认值自动转换为数组
-				if(self.elements[key].type == 'checkbox' && !Array.isArray(self.elements[key].default)){
-					let _default = self.elements[key].default;
-					self.elements[key].default = [];
-					if(_default !== ''){
-						self.elements[key].default.push(_default.toString());
-					}
-				}
-				//值和默认值保持一致
-				self.elements[key].value = self.elements[key].default;
-			});
-		}
-		this.create();
-	},
-	/**
-	 * 创建行元素
-	 */
-	createRowElement: function(){
-		let obj = document.createElement('div');
-		obj.className = 'row';
-		return obj;
-	},
-	/**
-	 * 创建表单
-	 */
-	create: function(){
-		let self = this;
-		$('#'+this.id).html('');
-		//表单元素
-		let eleKeys = Object.keys(this.elements);
-		let lastEleKey = eleKeys[eleKeys.length - 1];//最后一个元素的key
-		let colNumOnRow = 0;//一行的列数
-		let rowBox = this.createRowElement();
-		eleKeys.forEach(function(key){
-			let info = self.elements[key];
-			let colTitle = document.createElement('label');
-			colTitle.innerHTML = info.name;
-			let colBox = document.createElement('div');
-			let colNum = info.column > 0 ? info.column : 12;
-			colBox.className = 'col-sm-'+colNum;
-			colBox.append(colTitle);
-			let eleObj;
-			//input
-			if(['text','password','radio','checkbox','number','tel','timer'].indexOf(info.type) >= 0){
-				//具有多个选项
-				if(['radio','checkbox'].indexOf(info.type) >= 0){
-					let optKeys = Object.keys(info.options);
-					if(optKeys.length){
-						let optBoxObj = document.createElement('div');
-						optBoxObj.className = 'form-multiselect-row';
-						optKeys.forEach(function(optKey){
-							let label = document.createElement('label');
-							label.innerHTML = info.options[optKey];
-							eleObj = document.createElement('input');
-							eleObj.type = info.type;
-							eleObj.name = key;
-							eleObj.value = optKey;
-							if(Array.isArray(info.default)){
-								if(info.default.indexOf(optKey) >= 0){
-									eleObj.checked = true;
-								}
-							}
-							else if(info.default == optKey){
-								eleObj.checked = true;
-							}
-							label.prepend(eleObj);
-							optBoxObj.append(label);
-						});
-						colBox.append(optBoxObj);
-					}
-				}
-				//唯一表单元素
-				else{
-					eleObj = document.createElement('input');
-					eleObj.type = info.type;
-					eleObj.name = key;
-					eleObj.value = info.default;
-					eleObj.placeholder = info.placeholder;
-					eleObj.className = 'form-control';
-					if(info.type == 'timer'){
-						eleObj.readOnly = true;
-					}
-					if(info.unit){
-						let groupObj = document.createElement('div');
-						groupObj.className = 'input-group';
-						groupObj.append(eleObj);
-						let groupText = document.createElement('span');
-						groupText.className = 'input-group-text';
-						groupText.innerHTML = info.unit;
-						let groupAppend = document.createElement('div');
-						groupAppend.className = 'input-group-append';
-						groupAppend.append(groupText);
-						groupObj.append(groupAppend);
-						colBox.append(groupObj);
-					}
-					else{
-						colBox.append(eleObj);
-					}
-				}
-			}
-			//else if(info.type == 'textarea'){
-			else if(['textarea','html'].indexOf(info.type) >= 0){
-				eleObj = document.createElement('textarea');
-				eleObj.name = key;
-				eleObj.value = info.default;
-				eleObj.className = 'form-control';
-				eleObj.placeholder = info.placeholder;
-				if(info.type == 'html'){
-					eleObj.dataset.editor = 1;
-				}
-				colBox.append(eleObj);
-			}
-			//下拉选择框
-			else if(info.type == 'select'){
-				eleObj = document.createElement('select');
-				eleObj.name = key;
-				eleObj.className = 'form-control';
-				Object.keys(info.options).forEach(function(optKey){
-					let option = document.createElement('option');
-					option.value = optKey;
-					option.innerHTML = info.options[optKey];
-					if(info.default === optKey){
-						option.selected = true;
-					}
-					eleObj.append(option);
-				})
-				colBox.append(eleObj);
-			}
-			//绑定表单change事件
-			$(colBox).on('change', '[name='+key+']', function(){
-				let val = $(this).val();
-				//多选项要单独处理
-				if($(this).attr('type') == 'checkbox'){
-					if(!Array.isArray(self.elements[key].value)){
-						self.elements[key].value = [];
-					}
-					if($(this).prop('checked')){
-						self.elements[key].value.push(val);
-					}
-					else{
-						self.elements[key].value.splice(self.elements[key].value.indexOf(val), 1);
-					}
-				}
-				else{
-					self.elements[key].value = val;
-				}
-			});
-			//时间选择器要绑一下控件
-			if(info.type == 'timer'){
-				self.baseTimerParam.minView = 2;
-				self.baseTimerParam.format = info.format ? info.format : 'yyyy-mm-dd';
-				if(/h/i.test(self.baseTimerParam.format)){
-					self.baseTimerParam.minView = 1;
-				}
-				$(eleObj).datetimepicker(self.baseTimerParam);
-			}
-			colNumOnRow += colNum;
-			//一行只能放下12列
-			if(colNumOnRow <= 12){
-				rowBox.append(colBox);
-			}
-			//如果当前行已经放不下表单元素，先把行放到表单中
-			//最后一个表单元素要把行放到表单中
-			//再生成一个新的行对象，重置行内列数
-			if(colNumOnRow >= 12 || key == lastEleKey){
-				$('#'+self.id).append(rowBox);
-				rowBox = self.createRowElement();
-				if(colNumOnRow > 12){
-					rowBox.append(colBox);
-					colNumOnRow = colNum;
-				}
-				else{
-					colNumOnRow = 0;
-				}
-			}
-			if(colNumOnRow >= 12 && key == lastEleKey){
-				$('#'+self.id).append(rowBox);
-			}
-		});
-		//按钮组
-		rowBox = self.createRowElement();
-		let submitBtn = document.createElement('button');
-		submitBtn.className = 'btn btn-success';
-		submitBtn.id = this.id + '_btn_submit';
-		submitBtn.innerHTML = '提交';
-		let cancelBtn = document.createElement('button');
-		cancelBtn.className = 'btn btn-default';
-		cancelBtn.id = this.id + '_btn_submit';
-		cancelBtn.innerHTML = '取消';
-		let colBox = document.createElement('div');
-		colBox.className = 'col-12';
-		colBox.append(submitBtn);
-		colBox.append(cancelBtn);
-		rowBox.append(colBox);
-		$('#'+self.id).append(rowBox);
-		//绑定按钮click事件
-		$('#'+this.id).on('click', '#'+submitBtn.id+',#'+cancelBtn.id, function(){
-			if($(this).attr('id') == submitBtn.id){
-				self.submit();
-			}
-			else{
-				self.hide();
-			}
-		});
-		//如果有富文本元素，进行初始化
-		//TODO 后面要改一下图片和视频插入按钮相关逻辑
-		$('#'+self.id).find('[data-editor=1]').each(function(){
-			let key = $(this).attr('name');
-			$(this).summernote({
-				lang: 'zh-CN',
-				height: 150,
-				callbacks: {
-					onChange: function(contents){
-						self.elements[key].value = contents;
-					}
-				}
-			});
-		});
-	},
-	/**
-	 * 设置表单数据
-	 * @param formData
-	 */
-	setData: function(formData){
-		let self = this;
-		formData = formData ? formData : {};
-		Object.keys(this.elements).forEach(function(key){
-			let type = self.elements[key].type;
-			let newVal = formData.hasOwnProperty(key) ? formData[key] : self.elements[key].default;
-			//多选项
-			if(type == 'checkbox'){
-				self.elements[key].value = [].concat(newVal);//要防止地址引用
-				$('#'+self.id+' [name='+key+']').prop('checked', false);
-				self.elements[key].value.forEach(function(val){
-					$('#'+self.id+' [name='+key+'][value='+val+']').prop('checked', true);
-				});
-			}
-			//富文本
-			else if(type == 'html'){
-				$('#'+self.id+' [name='+key+']').summernote('code', newVal);
-			}
-			else{
-				self.elements[key].value = newVal;
-				$('#'+self.id+' [name='+key+']').val(self.elements[key].value);
-			}
-		});
-	},
-	/**
-	 * 显示表单
-	 * @param formData 表单数据
-	 */
-	show: function(formData){
-		this.setData(formData);
-		$('#'+this.id).show();
-	},
-	hide: function(){
-		$('#'+this.id).hide();
-	},
-	submit: function(){
-		let self = this;
-		let formData = {};
-		Object.keys(this.elements).forEach(function(key){
-			formData[key] = self.elements[key].value;
-		})
-		console.log(formData)
-		this.hide();
-	}
-}
-
-/**
- * 基于bootstrap4的分页组件
- */
-const Pagination = {
-	id: '',//选择器
-	currentPage: 1,//当前页码
-	recordNum: 0,//总记录数
-	onPageNum: 1,//每页记录数
-	totalPage: 1,//总页数
-	pageSideNum: 2,//当前页码两侧的页码显示数量
-	init: function(param){
-		this.id = param.id;
-		this.currentPage = param.currentPage > 1 ? param.currentPage : 1;
-		this.recordNum = param.recordNum > 0 ? param.recordNum : 0;
-		this.onPageNum = param.onPageNum > 1 ? param.onPageNum : 1;
-		this.pageSideNum = param.pageSideNum > 0 ? param.pageSideNum : 2;
-		this.totalPage = Math.ceil(this.recordNum / this.onPageNum);
-		if($('#'+param.id).length){
-			let self = this;
-			this.render();
-			$('#'+param.id).on('click', 'a', function(e){
-				e.preventDefault();
-				if(self.currentPage != $(this).data('page')){
-					self.currentPage = $(this).data('page');
-					self.render();
-					if(param.pageClick){
-						(param.pageClick)(self.currentPage);
-					}
-				}
-			});
-		}
-	},
-	render: function(){
-		let html = this.compile(this.currentPage, '', 'active');
-		for(let i=1; i<=this.pageSideNum; i++){
-			html = this.compile(this.currentPage - i) + html + this.compile(this.currentPage + i);
-		}
-		if(this.currentPage - this.pageSideNum > 1){
-			html = this.compile(1, '...', 'disabled') + html;
-			html = this.compile(1) + html;
-		}
-		if(this.currentPage > 1){
-			html = this.compile(this.currentPage - 1, '<') + html;
-		}
-		if(this.currentPage + this.pageSideNum < this.totalPage){
-			html += this.compile(this.totalPage, '...', 'disabled');
-			html += this.compile(this.totalPage);
-		}
-		if(this.currentPage < this.totalPage){
-			html += this.compile(this.currentPage + 1, '>');
-		}
-		//html = this.compile(1, this.currentPage+'/'+this.totalPage+'('+this.recordNum+')', 'disabled') + html;
-		html = '<ul class="clearfix">' + html + '</ul>\n';
-		$('#'+this.id).html(html);
-	},
-	compile: function(page, pageText, className){
-		if(page < 1 || page > this.totalPage){
-			return '';
-		}
-		pageText = pageText ? pageText : page;
-		className = className ? className : '';
-		return '<li class="page-item ' + className +'">\n' +
-			'<a class="page-link" data-page="' + page + '" href="#">' + pageText + '</a>\n' +
-			'</li>\n';
-	},
-}
-
-/**
- * 表格组件
- */
-const Table = {
-	id: '',//表格ID
-	header: {//表头信息
-		// key: {//即键名数组中的值
-		// 	show: 1,//是否显示(可自由选择)
-		// 	name: '',//列名
-		// 	regex: '',//用来修正显示的正则表达式
-		// }
-	},
-	actions: {//操作列表
-		// edit: {
-		// 	name: '',//显示名称
-		// 	click: '',//点击事件
-		// 	className: '',//样式名
-		// }
-	},
-	keys: [],//键名数组，键名索引和数据索引保持一致
-	data: [],
-	actKey: '',//操作时标记对应数据行的key
-	init: function(param){
-		let self = this;
-		this.id = param.id;
-		Object.keys(param.header).forEach(function(key){
-			self.header[key] = {
-				show: param.header[key].hasOwnProperty('show') ? param.header[key].show : 1,
-				name: param.header[key].hasOwnProperty('name') ? param.header[key].name : '',
-				regex: param.header[key].hasOwnProperty('regex') ? param.header[key].regex : '',
-			}
-		});
-		Object.keys(param.actions).forEach(function(key){
-			self.actions[key] = {
-				name: param.actions[key].hasOwnProperty('name') ? param.actions[key].name : '',
-				click: param.actions[key].hasOwnProperty('click') ? param.actions[key].click : '',
-				className: param.actions[key].hasOwnProperty('className') ? param.actions[key].className : '',
-			}
-		});
-		this.create();
-		return this;
-	},
-	setKeys: function(keys){
-		this.keys = keys;
-		return this;
-	},
-	setData: function(data){
-		this.data = data;
-		this.render();
-	},
-	create: function(){
-		let self = this;
-		let tableBox = document.createElement('div');
-		tableBox.className = 'table-responsive';
-		tableBox.append(document.createElement('table'));
-		$(tableBox).find('table').addClass('table table-striped')
-			.append(document.createElement('thead'))
-			.append(document.createElement('tbody'));
-		$(tableBox).find('thead').append(document.createElement('tr'));
-		Object.keys(this.header).forEach(function(key){
-			if(self.header[key].show){
-				let th = document.createElement('th');
-				th.innerHTML = self.header[key].name;
-				$(tableBox).find('thead tr').append(th);
-			}
-		});
-		let actTh = document.createElement('th');
-		actTh.innerHTML = '操作';
-		$(tableBox).find('thead tr').append(actTh);
-		$('#'+this.id).append(tableBox);
-	},
-	render: function(){
-		let self = this;
-		Object.keys(this.data).forEach(function(i){
-			let tr = document.createElement('tr');
-			Object.keys(self.header).forEach(function(key){
-				let td = document.createElement('td');
-				let idx = self.keys.indexOf(key);
-				let value = self.data[i][idx] ? self.data[i][idx] : '';
-				if(self.header[key].regex){
-					value = self.header[key].regex.test(value);
-				}
-				td.innerHTML = value;
-				tr.append(td);
-			});
-			//操作列
-			let actTd = document.createElement('td');
-			Object.keys(self.actions).forEach(function(key){
-				let actBtn = document.createElement('button');
-				actBtn.className = 'btn btn-sm ' + self.actions[key].className;
-				actBtn.innerHTML = self.actions[key].name;
-				actBtn.onclick = function(){
-					self.actKey = i;
-				}
-				if(self.actions[key].click){
-					$(actBtn).on('click', self.actions[key].click);
-				}
-				actTd.append(actBtn);
-			});
-			tr.append(actTd);
-			$('#'+self.id).find('tbody').append(tr);
-		});
-	},
-	/**
-	 * 获取操作所在行的数据
-	 */
-	getActionData: function(){
-		let data = {};
-		let self = this;
-		Object.keys(this.keys).forEach(function(key){
-			data[self.keys[key]] = self.data[self.actKey][key];
-		});
-		return data;
-	},
-}
 

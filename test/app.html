@@ -94,19 +94,6 @@
                 delete this.setActions;
             },
             /**
-             * 提交表单
-             */
-            submitForm: function(){
-                console.log(this.data.form);
-                this.hideForm();
-            },
-            /**
-             * 隐藏表单
-             */
-            hideForm: function(){
-                $('#' + this.id + ' form').hide();
-            },
-            /**
              * 显示表单
              */
             showForm: function(data){
@@ -134,17 +121,63 @@
                 $('#' + this.id + ' form').show();
             },
             /**
+             * 隐藏表单
+             */
+            hideForm: function(){
+                $('#' + this.id + ' form').hide();
+            },
+            /**
+             * 提交表单
+             */
+            submitForm: function(){
+                let postData = {};
+                Object.keys(this.data.form).forEach(key => {
+                    if(this.data.form[key].regex){
+                        if(this.data.form[key].value.replace(this.data.form[key].regex, '') !== ''){
+                            Dialog.show({
+                                message: this.data.form[key].tips,
+                            });
+                        }
+                    }
+                    postData[key] = this.data.form[key].value;
+                });
+                $.post(
+                    this.formApiUrl,
+                    postData,
+                    result => {
+                        this.hideForm();
+                    },
+                    err => {
+                        Dialog.show({
+                            message: err.message,
+                        });
+                    }
+                );
+            },
+            /**
              * 提交过滤
              */
             submitFilter: function(){
-                this.data.keys = ['id','name','keyword','desc'];
-                this.data.list = [
-                    [1,'name1','kw1','desc1'],
-                    [2,'name2','kw2','desc2'],
-                    [3,'name3','kw3','desc3'],
-                ];
-                this.data.recordNum = 3;
-                this.renderTable();
+                let url = this.dataApiUrl;
+                Object.keys(this.data.filter).forEach(key => {
+                    url += '/' + key + '/' + this.data.filter[key].value;
+                });
+                url += '/page/' + this.data.page;
+                console.log(url)
+                $.get(
+                    url,
+                    result => {
+                        this.data.keys = result.keys;
+                        this.data.list = result.data;
+                        this.data.recordNum = result.count ? result.count : result.data.length;
+                        this.renderTable();
+                    },
+                    err => {
+                        Dialog.show({
+                            message: err.message,
+                        });
+                    }
+                )
             },
             /**
              * 设置表头信息
@@ -193,7 +226,6 @@
              * ]
              */
             setActions: function(cfg){
-                console.log(cfg)
                 Object.keys(cfg).forEach(i => {
                     let info = cfg[i];
                     this.data.actions[info.key] = {
@@ -426,8 +458,6 @@
              *         		value: text, //选项值与提示文字键值对
              *         },
              *         value: '',//值
-             *         regex: '',//检验值的正则表达式(空表示不校验)
-             *         tips: '',//校验不通过时的提示信息
              *         format: '',//时间格式(仅timer类型可用)
              *         click: 0,//点击事件(仅button类型可用)
              *         class: '',//样式名(bool类型默认flase使用btn-default,true使用btn-success)
@@ -447,8 +477,6 @@
                     info.placeholder = info.hasOwnProperty('placeholder') ? info.placeholder : '';
                     info.options = info.hasOwnProperty('options') ? info.options : {};
                     info.value = info.hasOwnProperty('value') ? info.value : '';
-                    info.regex = info.hasOwnProperty('regex') ? info.regex : '';
-                    info.tips = info.hasOwnProperty('tips') ? info.tips : '';
                     info.format = info.hasOwnProperty('format') ? info.format : '';
                     info.click = info.hasOwnProperty('click') ? info.click : '';
                     info.class = info.hasOwnProperty('class') ? info.class : '';
@@ -456,8 +484,6 @@
                     this.data.filter[info.key] = {
                         type: info.type,
                         value: info.value,
-                        regex: info.regex,
-                        tips: info.tips,
                     }
                     //下拉选择框
                     if(info.type == 'select'){
@@ -641,6 +667,10 @@
                 this.pages[page].setActions(config.actions);
                 delete config.actions;
             }
+            if (config.autoLoad){
+                this.pages[page].submitFilter();
+                delete config.autoLoad;
+            }
             Object.keys(config).forEach(key => {
                 this.pages[page].on(key, config[key]);
             });
@@ -673,7 +703,6 @@
                 console.log(this.data.listIdx)
             },
             addNew: function () {
-                console.log(this.id)
                 $('#'+this.id).find('form').show();
             },
             filter: [
