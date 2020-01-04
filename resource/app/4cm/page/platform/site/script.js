@@ -1,4 +1,6 @@
 {
+    formApiUrl: '/4cm/platform/saveSite',
+    dataApiUrl: '/4cm/platform/site',
     buttons: [
         {
             name: '新增',

@@ -1,6 +1,6 @@
 <?php
 
-class appBizPlatformSite extends appPubViewController
+class appBizPlatformSite extends appPubDataController
 {
 	protected function main(){
 

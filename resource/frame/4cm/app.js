@@ -195,6 +195,8 @@ const App = {
 									$('#container').append(`<div id="${pkey}"></div>`);
 									this.pages[pkey] = Object.assign({}, this.page);
 									this.pages[pkey].id = pkey;
+									this.pages[pkey].formApiUrl = config.formApiUrl;
+									this.pages[pkey].dataApiUrl = config.dataApiUrl;
 									if (config.buttons) {
 										this.pages[pkey].renderBtnGroup(config.buttons);
 										delete config.buttons;
@@ -386,24 +388,29 @@ const App = {
 		submitFilter: function(){
 			let url = this.dataApiUrl;
 			Object.keys(this.data.filter).forEach(key => {
-				url += '/' + key + '/' + this.data.filter[key].value;
+				let value = this.data.filter[key].value;
+				if(value !== ''){
+					url += '/' + key + '/' + value;
+				}
 			});
 			url += '/page/' + this.data.page;
 			console.log(url)
+			Backdrop.showLoading();
 			$.get(
 				url,
-				result => {
-					this.data.keys = result.keys;
-					this.data.list = result.data;
-					this.data.recordNum = result.count ? result.count : result.data.length;
+				res => {
+					this.data.keys = res.keys;
+					this.data.list = res.data;
+					this.data.recordNum = res.count ? res.count : res.data.length;
 					this.renderTable();
-				},
-				err => {
-					Dialog.show({
-						message: err.message,
-					});
 				}
-			)
+			).fail(() => {
+				Dialog.show({
+					message: '请求异常，请稍后重试！'
+				});
+			}).always(() => {
+				Backdrop.hideLoading();
+			})
 		},
 		/**
 		 * 设置表头信息
