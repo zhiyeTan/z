@@ -1,18 +1,31 @@
 {
     formApiUrl: '/4cm/platform/saveSite',
     dataApiUrl: '/4cm/platform/site',
+    gridWidth: 3,
+    renderType: 2,
     buttons: [
         {
             name: '新增',
             class: 'btn-primary',
             click: 'addNew',
-        }
+        },
+        {
+            name: '设置显示数据列',
+            class: 'btn-primary',
+            click: 'toggleTheadFilter',
+        },
     ],
     actions: [
         {
             key: 'edit',
             name: '修改',
             class: 'btn-primary',
+            click: 'editData',
+        },
+        {
+            key: 'delete',
+            name: '删除',
+            class: 'btn-danger',
             click: 'editData',
         }
     ],
@@ -72,5 +85,9 @@
             key: 'desc',
             name: '描述',
         },
+        {
+            key: 'thumb',
+            name: '缩略图'
+        }
     ],
 }

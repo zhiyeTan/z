@@ -187,7 +187,6 @@ const App = {
 						}
 						else{//未加载过
 							Backdrop.showLoading();
-							console.log(`${this.pageConfigDomain}/app/${this.appName}/page/${mod}/${biz}/script.js`)
 							$.get(
 								`${this.pageConfigDomain}/app/${this.appName}/page/${mod}/${biz}/script.js`,
 								cfg => {
@@ -197,6 +196,10 @@ const App = {
 									this.pages[pkey].id = pkey;
 									this.pages[pkey].formApiUrl = config.formApiUrl;
 									this.pages[pkey].dataApiUrl = config.dataApiUrl;
+									if(config.renderType){
+										this.pages[pkey].renderType = config.renderType;
+										delete config.renderType;
+									}
 									if (config.buttons) {
 										this.pages[pkey].renderBtnGroup(config.buttons);
 										delete config.buttons;
@@ -257,6 +260,8 @@ const App = {
 		id: '',//页面ID
 		formApiUrl: '',//表单接口
 		dataApiUrl: '',//数据接口
+		gridWidth: 1,//栅格列宽(1~12)
+		renderType: 0,//渲染类型(0表格，1栅格，2树形)
 		data: {
 			page: 1,//当前页码
 			onPageNum: 1,//每页记录数
@@ -354,6 +359,9 @@ const App = {
 		hideForm: function(){
 			$('#' + this.id + ' form').hide();
 		},
+		toggleTheadFilter: function(){
+			$('.thead-filter').toggle();
+		},
 		/**
 		 * 提交表单
 		 */
@@ -394,15 +402,15 @@ const App = {
 				}
 			});
 			url += '/page/' + this.data.page;
-			console.log(url)
 			Backdrop.showLoading();
 			$.get(
 				url,
 				res => {
+					console.log(res)
 					this.data.keys = res.keys;
 					this.data.list = res.data;
 					this.data.recordNum = res.count ? res.count : res.data.length;
-					this.renderTable();
+					this.renderListData();
 				}
 			).fail(() => {
 				Dialog.show({
@@ -437,13 +445,13 @@ const App = {
 			});
 			//确定按钮
 			html += '<div class="form-group"><button class="btn btn-primary">确定</button></div>';
-			theadFilter = $(`<div class="container-row form-inline">${html}</div>`);
+			theadFilter = $(`<div class="container-row form-inline thead-filter" style="display:none;">${html}</div>`);
 			theadFilter.find('input').each((i, e) => {
 				$(e).on('click', () => {
 					this.data.thead[$(e).val()].show = $(e).prop('checked') ? 1 : 0;
 				});
 			});
-			theadFilter.find('button').on('click', () => {this.renderTable()});
+			theadFilter.find('button').on('click', () => {this.renderListData()});
 			$('#' + this.id).append(theadFilter);
 		},
 		/**
@@ -480,15 +488,17 @@ const App = {
 		 * ]
 		 */
 		renderBtnGroup: function (cfg) {
-			let group = $('<div class="container-row"></div>');
+			let container = $('<div class="container-row form-inline"></div>');
 			Object.keys(cfg).forEach(i => {
+				let group = $('<div class="form-group"></div>')
 				let btn = $(`<button class="btn btn-default ${cfg[i].class}">${cfg[i].name}</button>`);
 				if (cfg[i].click) {
 					btn.on('click', () => this[cfg[i].click]());
 				}
 				group.append(btn);
+				container.append(group);
 			});
-			$('#' + this.id).append(group);
+			$('#' + this.id).append(container);
 		},
 		/**
 		 * 渲染表单(页面初始化后删掉)
@@ -549,7 +559,6 @@ const App = {
 					regex: info.regex,
 					tips: info.tips,
 				}
-				console.log(info.type)
 				//隐藏输入框只需要记录数据，不需要创建表单元素
 				if(info.type == 'hidden'){
 					return ;
@@ -779,7 +788,22 @@ const App = {
 			$('#' + this.id).append(filter);
 		},
 		/**
-		 * 渲染表头过滤器
+		 * 渲染列表数据
+		 */
+		renderListData: function(){
+			switch (this.renderType) {
+				case 1:
+					this.renderGrid();
+					break;
+				case 2:
+					this.renderTree();
+					break;
+				default:
+					this.renderTable();
+			}
+		},
+		/**
+		 * 渲染表格
 		 */
 		renderTable: function(){
 			if(!$('#' + this.id).find('table').length){
@@ -814,7 +838,11 @@ const App = {
 				let td = $('<td></td>');
 				//数据列
 				keys.forEach(key => {
-					tr.append($(`<td>${this.data.list[i][this.data.keys.indexOf(key)]}</td>`));
+					let value = this.data.list[i][this.data.keys.indexOf(key)];
+					if(key == 'thumb'){
+						value = `<img src="${value}" />`;
+					}
+					tr.append($(`<td>${value}</td>`));
 				});
 				//操作列
 				actKeys.forEach(key => {
@@ -833,6 +861,97 @@ const App = {
 				tbody.append(tr);
 			});
 			this.renderPagination();
+		},
+		/**
+		 * 渲染栅格
+		 */
+		renderGrid: function(){
+			if(!$('#' + this.id).find('grid').length){
+				$('#' + this.id).append(
+					$('<div class="container-row"><grid class="row"></grid></div>'));
+			}
+			let grid = $('#' + this.id).find('grid').html('');
+			let keys = [];//本次渲染时要显示的key
+			let actKeys = Object.keys(this.data.actions);
+			Object.keys(this.data.thead).forEach(key => {
+				if(this.data.thead[key].show){
+					keys.push(key);
+				}
+			});
+			Object.keys(this.data.list).forEach(i => {
+				let cell = $(`<div class="col-sm-${this.gridWidth}"></div>`);
+				let cellLining = $('<div class="grid-cell-linning"></div>')
+				//数据列
+				keys.forEach(key => {
+					let value = this.data.list[i][this.data.keys.indexOf(key)];
+					if(key == 'thumb'){
+						value = `<img src="${value}" />`;
+					}
+					cellLining.append($(`<p>${value}</p>`));
+				});
+				//操作列
+				actKeys.forEach(key => {
+					let act = this.data.actions[key];
+					let btn = $(`<button name="${key}" class="btn btn-sm ${act.class}">${act.name}</button>`);
+					//绑定事件
+					btn.on('click', () => {
+						this.data.listIdx = i;
+						if(act.click){
+							this[act.click]();
+						}
+					});
+					cellLining.append(btn);
+				});
+				cell.append(cellLining);
+				grid.append(cell);
+			});
+			this.renderPagination();
+		},
+		/**
+		 * 渲染树形结构
+		 */
+		renderTree: function(){
+			if(!$('#' + this.id).find('tree').length){
+				$('#' + this.id).append(
+					$('<div class="container-row"><tree></tree></div>'));
+			}
+			$('#' + this.id).find('tree').html('').append(this.getTreeElement());
+		},
+		/**
+		 * 获取树形结构
+		 * @param data
+		 * [
+		 * 		id=>{
+		 * 		 	title: 标题,
+		 * 		 	pid: 上级id,
+		 * 		 	其他字段(编辑时传递给表单)
+		 * 		}
+		 * ]
+		 */
+		getTreeElement: function(pid){
+			let tree = $('<ul></ul>');
+			let actKeys = Object.keys(this.data.actions);
+			pid = pid ? pid : 0;
+			Object.keys(this.data.list).forEach(i => {
+				if(this.data.list[i][this.data.keys.indexOf('pid')] == pid){
+					let li = $(`<li><p><span>${this.data.list[i][this.data.keys.indexOf('title')]}</span></p></li>`);
+					actKeys.forEach(key => {
+						let act = this.data.actions[key];
+						let btn = $(`<button name="${key}" class="btn btn-sm ${act.class}">${act.name}</button>`)
+						//绑定事件
+						btn.on('click', () => {
+							this.data.listIdx = i;
+							if(act.click){
+								this[act.click]();
+							}
+						});
+						li.find('p').append(btn);
+					});
+					li.append(this.getTreeElement(i));
+					tree.append(li);
+				}
+			});
+			return tree.find('li').length ? tree : '';
 		},
 		/**
 		 * 渲染分页器
@@ -857,9 +976,18 @@ const App = {
 			if(this.data.page < maxPage){
 				html += this.getPageHtml(this.data.page + 1, '>');
 			}
-			html = '<ul class="clearfix">' + html + '</ul>\n';
-			$('#' + this.id + ' table').nextAll().remove();
-			$('#' + this.id + ' table').closest('div').append($(html));
+			html = '<ul class="pagination clearfix">' + html + '</ul>\n';
+			tagName = 'table';
+			switch(this.renderType){
+				case 1:
+					tagName = 'grid';
+					break;
+				case 2:
+					tagName = 'tree';
+					break;
+			}
+			$(`#${this.id} ${tagName}`).nextAll().remove();
+			$(`#${this.id} ${tagName}`).closest('div').append($(html));
 		},
 		/**
 		 * 获取页码Html

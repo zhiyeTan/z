@@ -5,6 +5,33 @@ html{
 body{
 	background: #f3f6f8;
 }
+grid,tree{
+	display: block;
+}
+tree ul{
+	padding-left: 2em;
+}
+tree > ul{
+	padding-left: 0;
+}
+tree li{
+	list-style: none;
+}
+tree button{
+	margin-left: 4px;
+}
+grid{
+	padding: 0 .6rem;
+}
+grid > div{
+	padding: 0 !important;
+}
+.grid-cell-linning{
+	text-align: center;
+	padding: .8rem;
+	margin: .6rem;
+	border: 5px solid #eee;
+}
 #container{
 	position: absolute;
 	box-sizing: border-box;
@@ -35,10 +62,10 @@ body{
 .container-row .table button{
 	margin: 0 2px 1px 0;
 }
-#pagination{
+.pagination{
 	margin-top: 15px;
 }
-#pagination ul{
+.pagination ul{
 	margin: 0;
 	padding: 0;
 }
