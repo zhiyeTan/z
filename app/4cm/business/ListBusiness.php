@@ -18,7 +18,7 @@ class appBizListBusiness extends appPubDataController
 		unset($tree);
 		//从权限表里面拿到已经保存的映射，整理成bizMap一样的结构
 		$permission = [];
-		foreach(dHoldlonPermission::init()::getAll() as $item){
+		foreach(dHoldlongPermission::init()::getAll() as $item){
 			$permission[$item['appid']][] = $item['businessid'];
 		}
 		//取得已移除的business映射

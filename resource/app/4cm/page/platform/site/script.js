@@ -1,8 +1,6 @@
 {
     formApiUrl: '/4cm/platform/saveSite',
     dataApiUrl: '/4cm/platform/site',
-    gridWidth: 3,
-    renderType: 2,
     buttons: [
         {
             name: '新增',

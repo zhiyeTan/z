@@ -14,7 +14,20 @@ class zCoreRequest
 	 * 获取或添加错误信息栈堆
 	 */
 	public static function error($info = ''){
-		if($info){
+		if(!empty($info)){
+		    if(is_array($info)){
+		        if(!isset($info['message'])){
+		            $info = [
+		                'errno'=>$info[0],
+                        'message'=>$info[1],
+                        'file'=>$info[2] ?? '',
+                        'line'=>$info[3] ?? ''
+                    ];
+                }
+            }
+		    else{
+		        $info = ['errno'=>0, 'message'=> $info];
+            }
 			self::$error[] = $info;
 		}
 		else{

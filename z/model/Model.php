@@ -46,7 +46,7 @@ class zModModel
 			::having(self::$args['having'] ?? '')
 			::order(self::$args['order'] ?? '');
 			if(isset(self::$args['page'])){
-				zModDataBase::limit(self::$args['page'], self::$args['pageNum']);
+				zModDataBase::page(self::$args['page'], self::$args['pageNum']);
 			}
 			self::$args = [];
 			return zModDataBase::$method();

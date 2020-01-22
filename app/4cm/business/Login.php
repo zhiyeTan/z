@@ -25,7 +25,7 @@ class appBizLogin extends zConDataController
 					$this->message = '登陆成功';
 				}
 				else{
-					$admin = dHoldlonAdmin::init()::where(['mobile', '=', $account])::getRow();
+					$admin = dHoldlongAdmin::init()::where(['mobile', '=', $account])::getRow();
 					if(empty($admin)){
 						$this->errno = 2;
 						$this->message = '账号不存在';

@@ -59,7 +59,7 @@ grid > div{
 .container-row.form-inline label{
 	padding-right: 4px;
 }
-.container-row .table button{
+table button{
 	margin: 0 2px 1px 0;
 }
 .pagination{
