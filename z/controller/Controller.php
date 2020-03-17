@@ -80,6 +80,18 @@ trait zConController
 		}
 	}
 
+    /**
+     * 检查业务逻辑是否存在
+     * @access public
+     * @param  string  $appid     应用名
+     * @param  string  $module    模块名
+     * @param  string  $business  业务名
+     * @return bool
+     */
+    public static function checkBusiness($appid, $module, $business){
+        return is_file(UNIFIED_PATH . 'app' . Z_DS . $appid . Z_DS . 'business' . Z_DS . $module . Z_DS . $business . '.php');
+    }
+
 	/**
 	 * 校验请求
 	 * @access public

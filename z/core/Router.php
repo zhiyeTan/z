@@ -112,7 +112,8 @@ class zCoreRouter
                 $arrRequest['a'] = $tmpArr[0];
                 $arrRequest['m'] = $tmpArr[1] ?? '';
                 $arrRequest['b'] = $tmpArr[2] ?? 'index';
-                $startIndex = zCoreApp::checkBusiness($arrRequest['a'], $arrRequest['m'], $arrRequest['b']) ? 3 : 2;
+                //允许省略模块名
+                $startIndex = zConViewController::checkBusiness($arrRequest['a'], $arrRequest['m'], $arrRequest['b']) ? 3 : 2;
                 if($startIndex == 2){
                     $arrRequest['m'] = '';
                     $arrRequest['b'] = $tmpArr[1] ?? 'index';
@@ -125,21 +126,7 @@ class zCoreRouter
                 }
 			}
 		}
-		self::complementBasicParam($arrRequest);
-		zCoreRequest::get($arrRequest);
-		$domainMap = zCoreConfig::getDomainMap();
-		//如果是默认应用，根据域名映射取得对应的应用ID(应用目录)
-		if($arrRequest['a'] == 'default' && !empty($domainMap)){
-		    $arrRequest['a'] = $domainMap[0];
-        }
-		//判断是否允许访问当前应用/模块
-		if(!empty($domainMap) && !in_array($arrRequest['a'], $domainMap)){
-			trigger_error(T_NO_PERMISSION_MODULE, E_USER_ERROR);
-		}
-		//定义应用/模块目录和业务名称为常量
-        define('APP_ID', $arrRequest['a']);
-        define('APP_MODULE', $arrRequest['m']);
-		define('APP_BUSINESS', $arrRequest['b']);
+		return self::complementBasicParam($arrRequest);
 	}
 
     /**
